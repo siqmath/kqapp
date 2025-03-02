@@ -33,11 +33,13 @@
             display: block;
             margin-bottom: 5px;
         }
-        .form-group input {
+        .form-group input,
+        .form-group textarea {
             width: 100%;
             padding: 10px;
             border: 1px solid #ccc;
             border-radius: 4px;
+            box-sizing: border-box; /* Garante que o padding não aumente a largura */
         }
         .button {
             display: inline-block;
@@ -51,6 +53,7 @@
             font-size: 16px;
             text-align: center;
             margin: 5px 0;
+            cursor: pointer; /* Adiciona cursor de pointer */
         }
         .button:hover {
             background-color: #2D2D4A;
@@ -59,6 +62,21 @@
             color: green;
             margin: 10px 0;
             text-align: center;
+        }
+        .errorlist {
+            color: red;
+            margin-top: 5px;
+        }
+        .form-section {
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .form-section h2 {
+            font-size: 1.2em;
+            margin-bottom: 10px;
+            color: #555;
         }
     </style>
 </head>
@@ -70,56 +88,72 @@
 
 <div class="container">
     {% if success_message %}
-    <div class="success-message">{{ success_message }}</div>
+        <div class="success-message">{{ success_message }}</div>
     {% endif %}
-    
+
     <form action="{% url 'cadastrar_cliente' %}" method="POST">
         {% csrf_token %}
-        
-        <div class="form-group">
-            <label for="nome">Nome:</label>
-            <input type="text" id="nome" name="nome" required>
+
+        <div class="form-section">
+            <h2>Informações Pessoais</h2>
+            <div class="form-group">
+                <label for="{{ form.nome.id_for_label }}">Nome:</label>
+                {{ form.nome }}
+                {% if form.nome.errors %}
+                    <ul class="errorlist">{{ form.nome.errors }}</ul>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.email.id_for_label }}">Email:</label>
+                {{ form.email }}
+                {% if form.email.errors %}
+                    <ul class="errorlist">{{ form.email.errors }}</ul>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.telefone.id_for_label }}">Telefone:</label>
+                {{ form.telefone }}
+                {% if form.telefone.errors %}
+                    <ul class="errorlist">{{ form.telefone.errors }}</ul>
+                {% endif %}
+            </div>
         </div>
 
-        <div class="form-group">
-            <label for="email">Email:</label>
-            <input type="email" id="email" name="email" required>
-        </div>
+        <div class="form-section">
+            <h2>Informações Adicionais</h2>
+            <div class="form-group">
+                <label for="{{ form.cpf_cnpj.id_for_label }}">CPF/CNPJ:</label>
+                {{ form.cpf_cnpj }}
+                {% if form.cpf_cnpj.errors %}
+                    <ul class="errorlist">{{ form.cpf_cnpj.errors }}</ul>
+                {% endif %}
+            </div>
 
-        <div class="form-group">
-            <label for="telefone">Telefone:</label>
-            <input type="text" id="telefone" name="telefone" required>
-        </div>
+            <div class="form-group">
+                <label for="{{ form.endereco.id_for_label }}">Endereço:</label>
+                {{ form.endereco }}
+                {% if form.endereco.errors %}
+                    <ul class="errorlist">{{ form.endereco.errors }}</ul>
+                {% endif %}
+            </div>
 
-        <div class="form-group">
-            <label for="cpf">CPF:</label>
-            <input type="text" id="cpf" name="cpf" required>
-        </div>
+            <div class="form-group">
+                <label for="{{ form.cep.id_for_label }}">CEP:</label>
+                {{ form.cep }}
+                {% if form.cep.errors %}
+                    <ul class="errorlist">{{ form.cep.errors }}</ul>
+                {% endif %}
+            </div>
 
-        <div class="form-group">
-            <label for="rg">RG:</label>
-            <input type="text" id="rg" name="rg" required>
-        </div>
-
-        <div class="form-group">
-            <label for="cep">CEP:</label>
-            <input type="text" id="cep" name="cep" required>
-        </div>
-
-        <div class="form-group">
-            <label for="endereco_completo">Endereço Completo:</label>
-            <input type="text" id="endereco_completo" name="endereco_completo" required>
-        </div>
-
-        <div class="form-group">
-            <label for="lead">Como chegou até nós:</label>
-            <select id="lead" name="lead">
-                <option value="naoinformado">Não Informado</option>
-                <option value="indicacao">Indicação</option>
-                <option value="instagram">Instagram</option>
-                <option value="anuncio">Anúncio</option>
-                <option value="recorrente">Recorrente</option>
-            </select>
+            <div class="form-group">
+                <label for="{{ form.equipe.id_for_label }}">Equipe:</label>
+                {{ form.equipe }}
+                {% if form.equipe.errors %}
+                    <ul class="errorlist">{{ form.equipe.errors }}</ul>
+                {% endif %}
+            </div>
         </div>
 
         <button type="submit" class="button">Cadastrar</button>

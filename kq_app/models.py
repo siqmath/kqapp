@@ -1,172 +1,124 @@
-from django.db import models, transaction, IntegrityError
-from django.core.exceptions import ValidationError
-from datetime import datetime
+# models.py
+from django.db import models
+from django.utils import timezone
 
 class Cliente(models.Model):
-    numero = models.CharField(max_length=20, unique=True, null=True, blank=True)
-    nome = models.CharField(max_length=100, default='Nome não informado')
-    email = models.EmailField(default='email@exemplo.com')
-    telefone = models.CharField(max_length=20, default='0000000000')
-    cpf = models.CharField(max_length=11, unique=True)
-    rg = models.CharField(max_length=9, unique=True)
-    cep = models.CharField(max_length=8, default='00000000')
-    endereco_completo = models.CharField(max_length=100, default='Endereço não informado')
+    nome = models.CharField(max_length=200, verbose_name="Nome do Cliente")
+    email = models.EmailField(blank=True, null=True, verbose_name="Email")
+    telefone = models.CharField(max_length=20, blank=True, null=True, verbose_name="Telefone")
+    endereco = models.TextField(blank=True, null=True, verbose_name="Endereço")
+    cpf_cnpj = models.CharField(max_length=20, blank=True, null=True, verbose_name="CPF/CNPJ")
+    data_cadastro = models.DateTimeField(default=timezone.now, verbose_name="Data de Cadastro")
+    equipe = models.CharField(max_length=200, blank=True, null=True, verbose_name="Equipe")  # Novo campo
+    cep = models.CharField(max_length=10, blank=True, null=True, verbose_name="CEP")  # Novo campo
 
-LEAD_CHOICES = [
-    ('indicacao', 'Indicação'),
-    ('instagram', 'Instagram'),
-    ('anuncio', 'Anúncio'),
-    ('recorrente', 'Recorrente'),
-    ('naoinformado', 'Não Informado'),
-]
-lead = models.CharField(max_length=20, choices=LEAD_CHOICES, default='naoinformado')
+    class Meta:
+        verbose_name = "Cliente"
+        verbose_name_plural = "Clientes"
+        ordering = ['nome']
 
-def save(self, *args, **kwargs):
-    if not self.numero:
-        with transaction.atomic():
-            last_client = Cliente.objects.select_for_update().order_by('id').last()
-            self.numero = f"C{last_client.id + 1 if last_client else 1:05d}"
-    super().save(*args, **kwargs)
+    def __str__(self):
+        return f"{self.id} - {self.nome}"
 
-def __str__(self):
-    return self.nome
-class TipoProduto(models.Model):
-    nome = models.CharField(max_length=100)
-
-def __str__(self):
-    return self.nome
-class Material(models.Model):
-    nome = models.CharField(max_length=100)
-
-def __str__(self):
-    return self.nome
-class Produto(models.Model):
-    tipo = models.ForeignKey(TipoProduto, on_delete=models.CASCADE, default=1)
-material = models.ForeignKey(Material, on_delete=models.CASCADE)
-rendimento = models.DecimalField(max_digits=10, decimal_places=2)
-
-def __str__(self):
-    return f"{self.tipo.nome} - {self.material.nome} (Rendimento: {self.rendimento})"
 class Pedido(models.Model):
-    numero = models.CharField(max_length=50, unique=True, editable=False)
-cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE)
-data_pedido = models.DateTimeField(auto_now_add=True)
+    STATUS_CHOICES = (
+        ('novo', 'Novo'),
+        ('em_producao', 'Em Produção'),
+        ('aguardando_aprovacao', 'Aguardando Aprovação'),
+        ('concluido', 'Concluído'),
+        ('cancelado', 'Cancelado'),
+    )
 
-STATUS_CHOICES = [
-    ('preparacao', 'Preparação'),
-    ('compra', 'Compra'),
-    ('corte', 'Corte'),
-    ('personalizacao', 'Personalização'),
-    ('costura', 'Costura'),
-    ('embalagem', 'Embalagem'),
-]
-status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='preparacao')
+    cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE, verbose_name="Cliente")
+    data_criacao = models.DateTimeField(default=timezone.now, verbose_name="Data de Criação")
+    data_entrega = models.DateField(blank=True, null=True, verbose_name="Data de Entrega")
+    observacoes = models.TextField(blank=True, null=True, verbose_name="Observações", default="")
+    status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='novo', verbose_name="Status do Pedido")
+    valor_total = models.DecimalField(max_digits=12, decimal_places=2, default=0.00, verbose_name="Valor Total")
 
-def save(self, *args, **kwargs):
-    if not self.numero:
-        with transaction.atomic():
-            last_order = Pedido.objects.select_for_update().order_by('id').last()
-            if last_order:
-                last_number = int(last_order.numero[1:].split('-')[0])  # Extrai apenas a parte numérica antes do sufixo
-                new_number = f"P{last_number + 1:05d}"
-            else:
-                new_number = "P00001"
+    class Meta:
+        verbose_name = "Pedido"
+        verbose_name_plural = "Pedidos"
+        ordering = ['-data_criacao']
 
-            # Adiciona um sufixo de timestamp para garantir unicidade adicional
-            timestamp_suffix = datetime.now().strftime("%Y%m%d%H%M%S")
-            new_number = f"{new_number}-{timestamp_suffix}"
-            
-            if Pedido.objects.filter(numero=new_number).exists():
-                raise ValidationError("Número de pedido duplicado. Tente novamente.")
+    def __str__(self):
+        return f"Pedido {self.id} - {self.cliente.nome}"
 
-            self.numero = new_number
-    
-    try:
-        super().save(*args, **kwargs)
-    except IntegrityError:
-        raise ValidationError("Número de pedido duplicado. Tente novamente.")
+class Produto(models.Model):
+    nome = models.CharField(max_length=200, verbose_name="Nome do Produto", default="nome")
+    descricao = models.TextField(blank=True, null=True, verbose_name="Descrição", default="descrição")
+    preco = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Preço", default=0)
+    codigo_barras = models.CharField(max_length=50, blank=True, null=True, verbose_name="Código de Barras")
+    unidade_medida = models.CharField(max_length=20, default='un', verbose_name="Unidade de Medida")
 
-def __str__(self):
-    return f"Pedido {self.numero} - {self.cliente.nome}"
+    class Meta:
+        verbose_name = "Produto"
+        verbose_name_plural = "Produtos"
+        ordering = ['nome']
+
+    def __str__(self):
+        return self.nome
+
 class OrdemDeServico(models.Model):
-    pedido = models.ForeignKey(Pedido, on_delete=models.CASCADE, related_name='ordens_servico')
-    produto = models.ForeignKey(Produto, on_delete=models.CASCADE)
-    numero = models.CharField(max_length=20, unique=True, null=True, blank=True)
-    descricao = models.TextField(blank=True, null=True, default='')
-    materia_prima = models.CharField(max_length=255, default='')
-    cor = models.CharField(max_length=30, default='Indefinido')
-    quantidade = models.IntegerField(default=0)
-    valor = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    prazo = models.DateField(null=True, blank=True)
+    pedido = models.ForeignKey(Pedido, on_delete=models.CASCADE, verbose_name="Pedido")
+    produto = models.ForeignKey(Produto, on_delete=models.CASCADE, verbose_name="Produto")
+    quantidade = models.IntegerField(default=0, verbose_name="Quantidade")
+    preco_unitario = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Preço Unitário", default=0)
+    observacoes = models.TextField(blank=True, null=True, verbose_name="Observações", default="")
+    data_conclusao = models.DateField(blank=True, null=True, verbose_name="Data de Conclusão")
+    responsavel = models.CharField(max_length=100, blank=True, null=True, verbose_name="Responsável", default="")
 
-    pp_masculino = models.IntegerField(default=0)
-    p_masculino = models.IntegerField(default=0)
-    m_masculino = models.IntegerField(default=0)
-    g_masculino = models.IntegerField(default=0)
-    gg_masculino = models.IntegerField(default=0)
-    xg_masculino = models.IntegerField(default=0)
-    esp_masculino = models.IntegerField(default=0)
+    class Meta:
+        verbose_name = "Ordem de Serviço"
+        verbose_name_plural = "Ordens de Serviço"
 
-    pp_feminino = models.IntegerField(default=0)
-    p_feminino = models.IntegerField(default=0)
-    m_feminino = models.IntegerField(default=0)
-    g_feminino = models.IntegerField(default=0)
-    gg_feminino = models.IntegerField(default=0)
-    xg_feminino = models.IntegerField(default=0)
-    esp_feminino = models.IntegerField(default=0)
+    def __str__(self):
+        return f"OS {self.id} - {self.produto.nome}"
 
-    bordado = models.BooleanField(default=False)
-    estampa = models.BooleanField(default=False)
+    def save(self, *args, **kwargs):
+        # Garante que o preco_unitario seja igual ao preço do produto ao salvar
+        self.preco_unitario = self.produto.preco
+        super().save(*args, **kwargs)
 
-    compra = models.BooleanField(default=False)
-    corte = models.BooleanField(default=False)
-    arte = models.BooleanField(default=False)
-    estampa_fase = models.BooleanField(default=False)
-    impressao = models.BooleanField(default=False)
-    costura = models.BooleanField(default=False)
-    embalagem = models.BooleanField(default=False)
-    finalizado = models.BooleanField(default=False)
+class Estoque(models.Model):
+    produto = models.ForeignKey(Produto, on_delete=models.CASCADE, verbose_name="Produto")
+    quantidade = models.IntegerField(default=0, verbose_name="Quantidade")
+    data_atualizacao = models.DateTimeField(auto_now=True, verbose_name="Data de Atualização")
+    localizacao = models.CharField(max_length=100, blank=True, null=True, verbose_name="Localização", default="")
 
-def save(self, *args, **kwargs):
-    if not self.numero:
-        with transaction.atomic():
-            last_os = OrdemDeServico.objects.select_for_update().order_by('id').last()
-            new_number = f"OS{last_os.id + 1 if last_os else 1:05d}"
-            
-            if OrdemDeServico.objects.filter(numero=new_number).exists():
-                raise ValidationError("Número de ordem de serviço duplicado. Tente novamente.")
+    class Meta:
+        verbose_name = "Estoque"
+        verbose_name_plural = "Estoques"
 
-            self.numero = new_number
-    super().save(*args, **kwargs)
+    def __str__(self):
+        return f"Estoque de {self.produto.nome}"
 
-def __str__(self):
-    return f"Ordem de Serviço {self.numero} para Pedido {self.pedido.numero}"
 class Custo(models.Model):
-    pedido = models.ForeignKey(Pedido, on_delete=models.CASCADE, related_name='custos')
+    ordem_de_servico = models.ForeignKey(OrdemDeServico, on_delete=models.CASCADE, verbose_name="Ordem de Serviço", default=1)  # Default para evitar o erro
+    descricao = models.CharField(max_length=200, verbose_name="Descrição", default="Custo adicional")
+    valor = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Valor")
+    data = models.DateTimeField(default=timezone.now, verbose_name="Data")
+    tipo = models.CharField(max_length=50, blank=True, null=True, verbose_name="Tipo de Custo", default="")
 
-TIPO_CUSTO_CHOICES = [
-    ('materia_prima', 'Matéria-prima'),
-    ('estampador', 'Estampador'),
-    ('estampa', 'Estampa'),
-    ('bordado', 'Bordado'),
-    ('costura', 'Costura'),
-    ('transporte', 'Transporte'),
-    ('frete', 'Frete'),
-    ('sublimacao', 'Sublimação'),
-    ('terceirizado', 'Terceirizado'),
-    ('retrabalho', 'Retrabalho'),
-    ('imposto', 'Imposto'),
-    ('vendedor', 'Vendedor'),
-]
-tipo = models.CharField(max_length=15, choices=TIPO_CUSTO_CHOICES, default='materia_prima')
-valor = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-data_vencimento = models.DateField(null=True, blank=True)
+    class Meta:
+        verbose_name = "Custo"
+        verbose_name_plural = "Custos"
 
-STATUS_PAGAMENTO_CHOICES = [
-    ('pendente', 'Pendente'),
-    ('pago', 'Pago'),
-]
-status_pagamento = models.CharField(max_length=10, choices=STATUS_PAGAMENTO_CHOICES, default='pendente')
+    def __str__(self):
+        return self.descricao
 
-def __str__(self):
-    return f"{self.tipo} - Pedido {self.pedido.numero}"
+class Pagamento(models.Model):
+    pedido = models.ForeignKey(Pedido, on_delete=models.CASCADE, verbose_name="Pedido")
+    data_pagamento = models.DateTimeField(default=timezone.now, verbose_name="Data de Pagamento")
+    valor_pago = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Valor Pago")
+    forma_pagamento = models.CharField(max_length=50, verbose_name="Forma de Pagamento")
+    observacoes = models.TextField(blank=True, null=True, verbose_name="Observações", default="")
+    numero_parcelas = models.IntegerField(default=1, verbose_name="Número de Parcelas")
+    data_vencimento = models.DateField(blank=True, null=True, verbose_name="Data de Vencimento")
+
+    class Meta:
+        verbose_name = "Pagamento"
+        verbose_name_plural = "Pagamentos"
+
+    def __str__(self):
+        return f"Pagamento de {self.valor_pago} em {self.data_pagamento}"

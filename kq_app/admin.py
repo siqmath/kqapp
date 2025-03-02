@@ -1,40 +1,49 @@
+# kq_app/admin.py
 from django.contrib import admin
-from .models import Cliente, TipoProduto, Material, Produto, Pedido, OrdemDeServico, Custo
+from .models import Cliente, Produto, Pedido, OrdemDeServico, Custo, Pagamento, Estoque
 
 @admin.register(Cliente)
 class ClienteAdmin(admin.ModelAdmin):
-    list_display = ('numero', 'nome', 'email', 'telefone', 'cpf', 'rg')
-    search_fields = ('nome', 'email', 'cpf', 'rg')
-
-@admin.register(TipoProduto)
-class TipoProdutoAdmin(admin.ModelAdmin):
-    list_display = ('nome',)
-    search_fields = ('nome',)
-
-@admin.register(Material)
-class MaterialAdmin(admin.ModelAdmin):
-    list_display = ('nome',)
-    search_fields = ('nome',)
+    list_display = ('nome', 'email', 'telefone', 'cpf_cnpj', 'data_cadastro')
+    search_fields = ('nome', 'email', 'cpf_cnpj')
+    list_filter = ('data_cadastro',)
 
 @admin.register(Produto)
 class ProdutoAdmin(admin.ModelAdmin):
-    list_display = ('tipo', 'material', 'rendimento')
-    search_fields = ('tipo__nome', 'material__nome')
+    list_display = ('nome', 'preco', 'codigo_barras', 'unidade_medida')
+    search_fields = ('nome', 'codigo_barras')
+    list_filter = ('unidade_medida',)
 
 @admin.register(Pedido)
 class PedidoAdmin(admin.ModelAdmin):
-    list_display = ('numero', 'cliente', 'data_pedido', 'status')
-    list_filter = ('status',)
-    search_fields = ('numero', 'cliente__nome')
+    list_display = ('id', 'cliente', 'data_criacao', 'data_entrega', 'status', 'valor_total')
+    list_filter = ('status', 'data_criacao', 'data_entrega')
+    search_fields = ('id', 'cliente__nome')
+    date_hierarchy = 'data_criacao'  # Adiciona um filtro de data hierárquico
 
 @admin.register(OrdemDeServico)
 class OrdemDeServicoAdmin(admin.ModelAdmin):
-    list_display = ('numero', 'pedido', 'produto', 'cor', 'quantidade', 'valor', 'prazo')
-    list_filter = ('pedido', 'produto', 'cor')
-    search_fields = ('numero', 'descricao')
+    list_display = ('id', 'pedido', 'produto', 'quantidade', 'preco_unitario', 'data_conclusao', 'responsavel')
+    list_filter = ('produto', 'data_conclusao', 'responsavel')
+    search_fields = ('id', 'produto__nome', 'pedido__id')
+
+@admin.register(Estoque)
+class EstoqueAdmin(admin.ModelAdmin):
+    list_display = ('produto', 'quantidade', 'data_atualizacao', 'localizacao')
+    search_fields = ('produto__nome', 'localizacao')
+    list_filter = ('localizacao',)
+    date_hierarchy = 'data_atualizacao'  # Adiciona um filtro de data hierárquico
 
 @admin.register(Custo)
 class CustoAdmin(admin.ModelAdmin):
-    list_display = ('pedido', 'tipo', 'valor', 'status_pagamento')
-    list_filter = ('tipo', 'status_pagamento')
-    search_fields = ('pedido__numero', 'tipo')
+    list_display = ('ordem_de_servico', 'descricao', 'valor', 'data', 'tipo')
+    list_filter = ('tipo', 'data')
+    search_fields = ('descricao', 'ordem_de_servico__id')
+    date_hierarchy = 'data'  # Adiciona um filtro de data hierárquico
+
+@admin.register(Pagamento)
+class PagamentoAdmin(admin.ModelAdmin):
+    list_display = ('pedido', 'data_pagamento', 'valor_pago', 'forma_pagamento', 'numero_parcelas', 'data_vencimento')
+    list_filter = ('forma_pagamento', 'data_pagamento')
+    search_fields = ('pedido__id',)
+    date_hierarchy = 'data_pagamento'  # Adiciona um filtro de data hierárquico

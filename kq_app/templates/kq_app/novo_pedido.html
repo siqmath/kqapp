@@ -19,7 +19,7 @@
             text-align: center;
         }
         .container {
-            max-width: 600px;
+            max-width: 800px;
             margin: 20px auto;
             padding: 20px;
             background-color: white;
@@ -33,11 +33,12 @@
             display: block;
             margin-bottom: 5px;
         }
-        .form-group select, .form-group input {
+        .form-group select, .form-group input, .form-group textarea {
             width: 100%;
             padding: 10px;
             border: 1px solid #ccc;
             border-radius: 4px;
+            box-sizing: border-box; /* Garante que o padding não aumente a largura */
         }
         .button {
             display: inline-block;
@@ -51,12 +52,22 @@
             font-size: 16px;
             text-align: center;
             margin: 5px 0;
+            cursor: pointer; /* Adiciona cursor de pointer */
         }
         .button:hover {
             background-color: #2D2D4A;
         }
         .os-container {
             margin-top: 20px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .os-item {
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 4px;
         }
         table {
             width: 100%;
@@ -71,6 +82,10 @@
         th {
             background-color: #f0f0f0;
         }
+        .errorlist {
+            color: red;
+            margin-top: 5px;
+        }
     </style>
 </head>
 <body>
@@ -80,125 +95,105 @@
 </header>
 
 <div class="container">
-    <form action="{% url 'novo_pedido' %}" method="POST">
+    <form action="{% url 'novo_pedido' %}" method="POST" enctype="multipart/form-data">
         {% csrf_token %}
-        
+
+        <h2>Dados do Pedido</h2>
         <div class="form-group">
-            <label for="cliente">Selecione o Cliente:</label>
-            <select id="cliente" name="cliente" required>
-                <option value="">Selecione um cliente</option>
-                {% for cliente in clientes %}
-                    <option value="{{ cliente.id }}">{{ cliente.nome }}</option>
-                {% endfor %}
-            </select>
+            <label for="{{ pedido_form.cliente.id_for_label }}">Cliente:</label>
+            {{ pedido_form.cliente }}
+            {% if pedido_form.cliente.errors %}
+                <ul class="errorlist">{{ pedido_form.cliente.errors }}</ul>
+            {% endif %}
         </div>
 
-        <button type="button" class="button" onclick="adicionarOS()">Adicionar Ordem de Serviço</button>
+        <div class="form-group">
+            <label for="{{ pedido_form.data_entrega.id_for_label }}">Data de Entrega:</label>
+            {{ pedido_form.data_entrega }}
+            {% if pedido_form.data_entrega.errors %}
+                <ul class="errorlist">{{ pedido_form.data_entrega.errors }}</ul>
+            {% endif %}
+        </div>
 
+        <div class="form-group">
+            <label for="{{ pedido_form.observacoes.id_for_label }}">Observações:</label>
+            {{ pedido_form.observacoes }}
+            {% if pedido_form.observacoes.errors %}
+                <ul class="errorlist">{{ pedido_form.observacoes.errors }}</ul>
+            {% endif %}
+        </div>
+
+        <h2>Ordens de Serviço</h2>
         <div class="os-container" id="os-list">
-            <!-- As ordens de serviço serão adicionadas aqui dinamicamente -->
+            {{ ordem_de_servico_formset.management_form }}
+            {% for form in ordem_de_servico_formset %}
+                <div class="os-item">
+                    <h3>Ordem de Serviço</h3>
+                    {% for field in form %}
+                        <div class="form-group">
+                            <label for="{{ field.id_for_label }}">{{ field.label }}:</label>
+                            {{ field }}
+                            {% if field.errors %}
+                                <ul class="errorlist">{{ field.errors }}</ul>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+
+                    <h4>Tabela de Tamanhos</h4>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Tamanho</th>
+                                <th>Masculino</th>
+                                <th>Feminino</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>PP</td>
+                                <td><input type="number" name="{{ form.prefix }}-pp_masculino" value="0"></td>
+                                <td><input type="number" name="{{ form.prefix }}-pp_feminino" value="0"></td>
+                            </tr>
+                            <tr>
+                                <td>P</td>
+                                <td><input type="number" name="{{ form.prefix }}-p_masculino" value="0"></td>
+                                <td><input type="number" name="{{ form.prefix }}-p_feminino" value="0"></td>
+                            </tr>
+                            <tr>
+                                <td>M</td>
+                                <td><input type="number" name="{{ form.prefix }}-m_masculino" value="0"></td>
+                                <td><input type="number" name="{{ form.prefix }}-m_feminino" value="0"></td>
+                            </tr>
+                            <tr>
+                                <td>G</td>
+                                <td><input type="number" name="{{ form.prefix }}-g_masculino" value="0"></td>
+                                <td><input type="number" name="{{ form.prefix }}-g_feminino" value="0"></td>
+                            </tr>
+                            <tr>
+                                <td>GG</td>
+                                <td><input type="number" name="{{ form.prefix }}-gg_masculino" value="0"></td>
+                                <td><input type="number" name="{{ form.prefix }}-gg_feminino" value="0"></td>
+                            </tr>
+                            <tr>
+                                <td>XG</td>
+                                <td><input type="number" name="{{ form.prefix }}-xg_masculino" value="0"></td>
+                                <td><input type="number" name="{{ form.prefix }}-xg_feminino" value="0"></td>
+                            </tr>
+                            <tr>
+                                <td>ESP</td>
+                                <td><input type="number" name="{{ form.prefix }}-esp_masculino" value="0"></td>
+                                <td><input type="number" name="{{ form.prefix }}-esp_feminino" value="0"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            {% endfor %}
         </div>
 
         <button type="submit" class="button">Finalizar Pedido</button>
         <a href="{% url 'home' %}" class="button" style="background-color: #e67e22;">Menu</a>
     </form>
 </div>
-
-<script>
-    function adicionarOS() {
-        const osList = document.getElementById('os-list');
-        const osItem = document.createElement('div');
-        osItem.className = 'os-item';
-        osItem.innerHTML = `
-            <h3>Ordem de Serviço</h3>
-            <div class="form-group">
-                <label>Produto:</label>
-                <select name="produto" required>
-                    <option value="">Selecione um produto</option>
-                    {% for produto in produtos %}
-                    <option value="{{ produto.id }}">{{ produto }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Descrição da OS:</label>
-                <input type="text" name="descricao" required>
-            </div>
-            <div class="form-group">
-                <label>Cor:</label>
-                <input type="text" name="cor" required>
-            </div>
-            <div class="form-group">
-                <label>Quantidade:</label>
-                <input type="number" name="quantidade" min="0" required>
-            </div>
-            <div class="form-group">
-                <label>Valor:</label>
-                <input type="number" name="valor" step="0.01" min="0" required>
-            </div>
-            <div class="form-group">
-                <label>Prazo:</label>
-                <input type="date" name="prazo">
-            </div>
-            <div class="form-group">
-                <label>Bordado:</label>
-                <input type="checkbox" name="bordado">
-            </div>
-            <div class="form-group">
-                <label>Estampa:</label>
-                <input type="checkbox" name="estampa">
-            </div>
-            <h4>Tamanhos:</h4>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Tamanho</th>
-                        <th>Masculinos</th>
-                        <th>Femininos</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>PP</td>
-                        <td><input type="number" name="pp_masculino" min="0" value="0"></td>
-                        <td><input type="number" name="pp_feminino" min="0" value="0"></td>
-                    </tr>
-                    <tr>
-                        <td>P</td>
-                        <td><input type="number" name="p_masculino" min="0" value="0"></td>
-                        <td><input type="number" name="p_feminino" min="0" value="0"></td>
-                    </tr>
-                    <tr>
-                        <td>M</td>
-                        <td><input type="number" name="m_masculino" min="0" value="0"></td>
-                        <td><input type="number" name="m_feminino" min="0" value="0"></td>
-                    </tr>
-                    <tr>
-                        <td>G</td>
-                        <td><input type="number" name="g_masculino" min="0" value="0"></td>
-                        <td><input type="number" name="g_feminino" min="0" value="0"></td>
-                    </tr>
-                    <tr>
-                        <td>GG</td>
-                        <td><input type="number" name="gg_masculino" min="0" value="0"></td>
-                        <td><input type="number" name="gg_feminino" min="0" value="0"></td>
-                    </tr>
-                    <tr>
-                        <td>XG</td>
-                        <td><input type="number" name="xg_masculino" min="0" value="0"></td>
-                        <td><input type="number" name="xg_feminino" min="0" value="0"></td>
-                    </tr>
-                    <tr>
-                        <td>Especial</td>
-                        <td><input type="number" name="esp_masculino" min="0" value="0"></td>
-                        <td><input type="number" name="esp_feminino" min="0" value="0"></td>
-                    </tr>
-                </tbody>
-            </table>
-        `;
-        osList.appendChild(osItem);  // Adiciona o novo item de OS à lista
-    }
-</script>
 
 </body>
 </html>

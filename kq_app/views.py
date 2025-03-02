@@ -1,154 +1,177 @@
 # kq_app/views.py
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponse
 from django.contrib import messages
-from .models import Cliente, Pedido, OrdemDeServico, Produto, TipoProduto, Material, QuantidadeTamanho
-from .forms import PedidoForm, OrdemDeServicoForm, ClienteForm, QuantidadeTamanhoFormSet
+from django.db import transaction
+from .models import Cliente, Pedido, OrdemDeServico, Produto, Estoque, Custo, Pagamento
+from .forms import (
+    ClienteForm, PedidoForm, OrdemDeServicoForm, OrdemDeServicoFormSet, 
+    ProdutoForm, CustoForm, PagamentoForm
+)
 
 def home(request):
+    """Página inicial."""
     return render(request, 'kq_app/home.html')
 
-def novo_pedido(request):
-    if request.method == 'POST':
-        pedido_form = PedidoForm(request.POST)
-        quantidade_formset = QuantidadeTamanhoFormSet(request.POST)
-        
-        if pedido_form.is_valid() and quantidade_formset.is_valid():
-            # Salva o pedido primeiro
-            pedido = pedido_form.save()
-            
-            # Cria a ordem de serviço associada
-            ordem = OrdemDeServico.objects.create(pedido=pedido)
-            
-            # Salva as quantidades/tamanhos
-            quantidades = quantidade_formset.save(commit=False)
-            for qtd in quantidades:
-                qtd.ordem_servico = ordem
-                qtd.save()
-            
-            messages.success(request, f"Pedido {pedido.numero} criado com sucesso!")
-            return redirect('visualizar_producao')
-
-    else:
-        pedido_form = PedidoForm()
-        quantidade_formset = QuantidadeTamanhoFormSet()
-
-    context = {
-        'pedido_form': pedido_form,
-        'quantidade_formset': quantidade_formset,
-        'clientes': Cliente.objects.all(),
-        'produtos': Produto.objects.all()
-    }
-    return render(request, 'kq_app/novo_pedido.html', context)
-
 def cadastrar_cliente(request):
+    """Cadastra um novo cliente."""
     if request.method == 'POST':
         form = ClienteForm(request.POST)
         if form.is_valid():
             form.save()
             messages.success(request, 'Cliente cadastrado com sucesso!')
-            return redirect('lista_clientes')
+            return redirect('home')  # Redireciona para a página inicial
+        else:
+            messages.error(request, 'Erro ao cadastrar cliente. Verifique os dados.')
     else:
         form = ClienteForm()
-
     return render(request, 'kq_app/cadastrar_cliente.html', {'form': form})
 
+def novo_pedido(request):
+    if request.method == 'POST':
+        pedido_form = PedidoForm(request.POST)
+        ordem_de_servico_formset = OrdemDeServicoFormSet(request.POST, request.FILES)
+
+        if pedido_form.is_valid() and ordem_de_servico_formset.is_valid():
+            pedido = pedido_form.save(commit=False)
+            pedido.cliente = pedido_form.clean_cliente()
+            pedido.save()
+
+            for form in ordem_de_servico_formset:
+                if form.cleaned_data:
+                    ordem_de_servico = form.save(commit=False)
+                    ordem_de_servico.pedido = pedido
+                    ordem_de_servico.save()
+
+            return redirect('lista_pedidos')  # Redireciona para a listagem de pedidos
+    else:
+        pedido_form = PedidoForm()
+        ordem_de_servico_formset = OrdemDeServicoFormSet()
+
+    produtos = Produto.objects.all()
+    return render(request, 'kq_app/novo_pedido.html', {
+        'pedido_form': pedido_form,
+        'ordem_de_servico_formset': ordem_de_servico_formset,
+        'produtos': produtos,
+    })
+
 def editar_pedido(request, pedido_id):
-    pedido = get_object_or_404(Pedido.objects.prefetch_related('ordens_servico'), id=pedido_id)
-    
+    """Edita um pedido existente."""
+    pedido = get_object_or_404(Pedido, id=pedido_id)
     if request.method == 'POST':
         pedido_form = PedidoForm(request.POST, instance=pedido)
-        
         if pedido_form.is_valid():
             pedido_form.save()
             messages.success(request, "Pedido atualizado com sucesso!")
             return redirect('detalhes_pedido', pedido_id=pedido.id)
-
+        else:
+            messages.error(request, 'Erro ao atualizar pedido. Verifique os dados.')
     else:
         pedido_form = PedidoForm(instance=pedido)
+    return render(request, 'kq_app/editar_pedido.html', {'form': pedido_form, 'pedido_id': pedido_id})
 
-    return render(request, 'kq_app/editar_pedido.html', {
-        'form': pedido_form,
-        'pedido_id': pedido_id
-    })
+def detalhes_pedido(request, pedido_id):
+    """Mostra os detalhes de um pedido."""
+    pedido = get_object_or_404(Pedido, id=pedido_id)
+    ordens_de_servico = OrdemDeServico.objects.filter(pedido=pedido)
+    pagamentos = Pagamento.objects.filter(pedido=pedido)
+    total_pago = sum(pagamento.valor_pago for pagamento in pagamentos)
+    saldo_restante = pedido.valor_total - total_pago
+
+    context = {
+        'pedido': pedido,
+        'ordens_de_servico': ordens_de_servico,
+        'pagamentos': pagamentos,
+        'total_pago': total_pago,
+        'saldo_restante': saldo_restante,
+    }
+    return render(request, 'kq_app/detalhes_pedido.html', context)
 
 def visualizar_producao(request):
-    pedidos = Pedido.objects.all().prefetch_related('ordens_servico')
+    """Visualiza a produção (lista de pedidos)."""
+    pedidos = Pedido.objects.all()
     return render(request, 'kq_app/visualizar_producao.html', {'pedidos': pedidos})
 
-def adicionar_custo(request):
+def gerenciar_estoque(request):
+    """Gerencia o estoque de produtos."""
+    produtos = Produto.objects.all()
+    context = {'produtos': produtos}
+    return render(request, 'kq_app/gerenciar_estoque.html', context)
+
+def adicionar_custo(request, ordem_de_servico_id):
+    """Adiciona um custo a uma ordem de serviço."""
+    ordem_de_servico = get_object_or_404(OrdemDeServico, id=ordem_de_servico_id)
     if request.method == 'POST':
-        return redirect('home')
-    return render(request, 'kq_app/adicionar_custo.html')
+        form = CustoForm(request.POST)
+        if form.is_valid():
+            custo = form.save(commit=False)
+            custo.ordem_de_servico = ordem_de_servico
+            custo.save()
+            messages.success(request, 'Custo adicionado com sucesso!')
+            return redirect('detalhes_pedido', pedido_id=ordem_de_servico.pedido.id)
+        else:
+            messages.error(request, 'Erro ao adicionar custo. Verifique os dados.')
+    else:
+        form = CustoForm()
+    return render(request, 'kq_app/adicionar_custo.html', {'form': form, 'ordem_de_servico': ordem_de_servico})
 
 def controle_financeiro(request):
-    return render(request, 'kq_app/controle_financeiro.html')
+    """Controla as finanças (lista de pagamentos)."""
+    pagamentos = Pagamento.objects.all()
+    total_recebido = sum(pagamento.valor_pago for pagamento in pagamentos)
+    context = {
+        'pagamentos': pagamentos,
+        'total_recebido': total_recebido,
+    }
+    return render(request, 'kq_app/controle_financeiro.html', context)
+
+def adicionar_pagamento(request, pedido_id):
+    """Adiciona um pagamento a um pedido."""
+    pedido = get_object_or_404(Pedido, id=pedido_id)
+    if request.method == 'POST':
+        form = PagamentoForm(request.POST)
+        if form.is_valid():
+            pagamento = form.save(commit=False)
+            pagamento.pedido = pedido
+            pagamento.save()
+            messages.success(request, 'Pagamento adicionado com sucesso!')
+            return redirect('detalhes_pedido', pedido_id=pedido.id)
+        else:
+            messages.error(request, 'Erro ao adicionar pagamento. Verifique os dados.')
+    else:
+        form = PagamentoForm()
+    return render(request, 'kq_app/adicionar_pagamento.html', {'form': form, 'pedido': pedido})
 
 def lista_compra(request):
+    """Lista de compras (a implementar)."""
     return render(request, 'kq_app/lista_compra.html')
 
 def corteecostura(request):
-    ordens = OrdemDeServico.objects.filter(estado_atual__in=['corte', 'costura'])
-    return render(request,'kq_app/corteecostura.html',{'ordens':ordens})
+    """Página de corte e costura (a implementar)."""
+    # Ajuste conforme necessário para refletir o estado atual dos pedidos
+    pedidos = Pedido.objects.filter(status__in=['em_producao', 'aguardando_aprovacao'])
+    return render(request, 'kq_app/corteecostura.html', {'pedidos': pedidos})
 
 def gerenciar_produtos(request):
-    if request.method =='POST':
-        tipo_nome=request.POST.get('tipo')
-        material_nome=request.POST.get('material')
-        
-        tipo_obj,_=TipoProduto.objects.get_or_create(nome=tipo_nome)
-        material_obj,_=Material.objects.get_or_create(nome=material_nome)
-        
-        Produto.objects.create(
-           tipo=tipo_obj,
-           material=material_obj,
-           rendimento=request.POST.get('rendimento') 
-         )
-    return redirect('gerenciar_produtos')
+    """Gerencia os produtos (adicionar, editar, excluir)."""
+    if request.method == 'POST':
+        form = ProdutoForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Produto adicionado com sucesso!')
+            return redirect('gerenciar_produtos')
+        else:
+            messages.error(request, 'Erro ao adicionar produto. Verifique os dados.')
+    else:
+        form = ProdutoForm()
 
-    produtos=Produto.objects.select_related('tipo','material').all()
-    return render(
-         request,
-         'kq_app/gerenciar_produtos.html',
-         {'produtos':produtos}
-     )
+    produtos = Produto.objects.all()
+    return render(request, 'kq_app/gerenciar_produtos.html', {'produtos': produtos, 'form': form})
 
-def excluir_produto(request,pk):
-     produto=get_object_or_404(Produto,pk=pk)
-     produto.delete()
-     messages.success(
-         request,
-         f"Produto {produto.tipo} - {produto.material} excluído!"
-     )
-     return redirect('gerenciar_produtos')
-
-def detalhes_pedido(requset,pk): 
-     pediao=get_object_or_404(
-         Pediao.objects.prefetch_realted(
-             'ordens_servicco__quantidadetaminho_set'
-         ),
-         pk=pk 
-     )
-     
-     tamanhos={'Masculino':{},'Feminino':{}}
-     
-     for os in pediao.ordens_servicco.all():
-         for qt in os.quantidadetaminho_set.all():
-             genero=qt.genero 
-             tamanho=qt.taminho 
-             total=tamanhos[genero].get(taminho ,0)+qt.quantidadde 
-             tamanhos[genero][taminh]=total 
-    
-     context={
-         'pediao':pediao ,
-         'tamanhos_masc':tamanhos['Masculino'],
-         'tamnhos_femi':tamnhaos['Feminino']
-     } 
-    
-     return renser(
-         requset,
-         'kq_app/detalhes_pediao.html',
-          context 
-      ) 
-
-# Mantidas as demais funções conforme necessidade do projeto
+def excluir_produto(request, produto_id):
+    """Exclui um produto."""
+    produto = get_object_or_404(Produto, id=produto_id)
+    if request.method == 'POST':
+        produto.delete()
+        messages.success(request, f"Produto {produto.nome} excluído com sucesso!")
+        return redirect('gerenciar_produtos')
+    return render(request, 'kq_app/excluir_produto.html', {'produto': produto})
