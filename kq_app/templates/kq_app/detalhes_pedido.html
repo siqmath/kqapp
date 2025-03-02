@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalhes do Pedido - {{ pedido.numero }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        header {
+            background-color: #3D3D6A;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: center;
+        }
+        th {
+            background-color: #f0f0f0;
+        }
+        .button {
+            display: inline-block;
+            background-color: #3D3D6A;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+            font-size: 16px;
+            margin: 10px 0;
+        }
+        .button:hover {
+            background-color: #2D2D4A;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Detalhes do Pedido: {{ pedido.numero }}</h1>
+</header>
+
+<div>
+    <h2>Informações do Pedido</h2>
+    <p><strong>Cliente:</strong> {{ pedido.cliente.nome }}</p>
+    <p><strong>Data do Pedido:</strong> {{ pedido.data_pedido|date:"d/m/Y H:i" }}</p>
+
+    <!-- Formulário para atualizar o status do pedido -->
+    <form method="POST" action="{% url 'editar_pedido' pedido.id %}">
+        {% csrf_token %}
+        <p>
+            <strong>Status:</strong>
+            <select name="status" id="status">
+                <option value="preparacao" {% if pedido.status == 'preparacao' %}selected{% endif %}>Preparação</option>
+                <option value="compra" {% if pedido.status == 'compra' %}selected{% endif %}>Compra</option>
+                <option value="corte" {% if pedido.status == 'corte' %}selected{% endif %}>Corte</option>
+                <option value="personalizacao" {% if pedido.status == 'personalizacao' %}selected{% endif %}>Personalização</option>
+                <option value="costura" {% if pedido.status == 'costura' %}selected{% endif %}>Costura</option>
+                <option value="embalagem" {% if pedido.status == 'embalagem' %}selected{% endif %}>Embalagem</option>
+            </select>
+            <button type="submit" class="button">Atualizar Status</button>
+        </p>
+    </form>
+
+    <h2>Ordens de Serviço Associadas</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Produto</th>
+                <th>Descrição</th>
+                <th>Cor</th>
+                <th>Quantidade</th>
+                <th>Valor</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for ordem in ordens_de_servico %}
+            <tr>
+                <td>{{ ordem.id }}</td>
+                <td>{{ ordem.produto.tipo.nome }} - {{ ordem.produto.material.nome }}</td>
+                <td>{{ ordem.descricao }}</td>
+                <td>{{ ordem.cor }}</td>
+                <td>{{ ordem.quantidade }}</td>
+                <td>R$ {{ ordem.valor }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6">Nenhuma ordem de serviço encontrada para este pedido.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h2>Grade de Tamanhos</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Tamanho</th>
+                <th>Masculino</th>
+                <th>Feminino</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>PP</td>
+                <td>{{ tamanhos.pp_masculino }}</td>
+                <td>{{ tamanhos.pp_feminino }}</td>
+            </tr>
+            <tr>
+                <td>P</td>
+                <td>{{ tamanhos.p_masculino }}</td>
+                <td>{{ tamanhos.p_feminino }}</td>
+            </tr>
+            <tr>
+                <td>M</td>
+                <td>{{ tamanhos.m_masculino }}</td>
+                <td>{{ tamanhos.m_feminino }}</td>
+            </tr>
+            <tr>
+                <td>G</td>
+                <td>{{ tamanhos.g_masculino }}</td>
+                <td>{{ tamanhos.g_feminino }}</td>
+            </tr>
+            <tr>
+                <td>GG</td>
+                <td>{{ tamanhos.gg_masculino }}</td>
+                <td>{{ tamanhos.gg_feminino }}</td>
+            </tr>
+            <tr>
+                <td>XG</td>
+                <td>{{ tamanhos.xg_masculino }}</td>
+                <td>{{ tamanhos.xg_feminino }}</td>
+            </tr>
+            <tr>
+                <td>Especial</td>
+                <td>{{ tamanhos.esp_masculino }}</td>
+                <td>{{ tamanhos.esp_feminino }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <a href="{% url 'visualizar_producao' %}" class="button">Voltar</a>
+</div>
+
+</body>
+</html>

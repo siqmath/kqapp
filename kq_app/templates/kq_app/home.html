@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Página Inicial - Sistema KQ</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #3D3D6A;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .container {
+            padding: 20px;
+            text-align: center;
+        }
+        .button {
+            display: inline-block;
+            background-color: #3D3D6A;
+            color: white;
+            padding: 15px 30px;
+            margin: 10px;
+            text-decoration: none;
+            border: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+            font-size: 16px;
+        }
+        .button:hover {
+            background-color: #2D2D4A;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Bem-vindo ao Sistema KQ!</h1>
+</header>
+
+<div class="container">
+    <h2>Selecione uma das opções abaixo:</h2>
+    <a class="button" href="{% url 'novo_pedido' %}">Novo Pedido</a>
+    <a class="button" href="{% url 'cadastrar_cliente' %}">Cadastrar Cliente</a>
+    <a class="button" href="{% url 'editar_pedido' 0 %}">Editar Pedido</a> <!-- Substitua 0 pelo ID apropriado -->
+    <a class="button" href="{% url 'visualizar_producao' %}">Acompanhar Pedidos</a>
+    <a class="button" href="{% url 'gerenciar_estoque' %}">Gerenciar Estoque</a>
+    <a class="button" href="{% url 'controle_financeiro' %}">Controle Financeiro</a>
+    <a class="button" href="{% url 'lista_compra' %}">Lista de Compra</a>
+    <a class="button" href="{% url 'corteecostura' %}">Corte e Costura</a>
+    <a class="button" href="{% url 'gerenciar_produtos' %}">Gerenciar Produtos</a>
+</div>
+
+</body>
+</html>

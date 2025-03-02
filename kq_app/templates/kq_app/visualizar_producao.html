@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visualizar Produção - Sistema KQ</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #3D3D6A;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .container {
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: center;
+        }
+        th {
+            background-color: #f0f0f0;
+        }
+        .button {
+            display: inline-block;
+            background-color: #3D3D6A;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+            font-size: 16px;
+            margin: 10px 0;
+            text-align: center;
+        }
+        .button:hover {
+            background-color: #2D2D4A;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Visualizar Produção</h1>
+</header>
+
+<div class="container">
+    <a class="button" href="{% url 'novo_pedido' %}">Novo Pedido</a>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID do Pedido</th>
+                <th>Cliente</th>
+                <th>Data do Pedido</th>
+                <th>Status</th>
+                <th>Ações</th> <!-- Coluna para ações como visualizar ou editar -->
+            </tr>
+        </thead>
+        <tbody>
+            {% for pedido in pedidos %}
+            <tr>
+                <td>{{ pedido.numero }}</td>
+                <td>{{ pedido.cliente.nome }}</td>
+                <td>{{ pedido.data_pedido|date:"d/m/Y H:i" }}</td> <!-- Formatação de data -->
+                <td>{{ pedido.status }}</td>
+                <td>
+                    <a href="{% url 'detalhes_pedido' pedido.id %}" class="button">Ver Detalhes</a> <!-- Link para detalhes do pedido -->
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5">Nenhum pedido encontrado.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+</body>
+</html>

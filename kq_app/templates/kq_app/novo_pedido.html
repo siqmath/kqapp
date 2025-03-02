@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Novo Pedido - Sistema KQ</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #3D3D6A;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .form-group select, .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .button {
+            display: inline-block;
+            background-color: #3D3D6A;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+            font-size: 16px;
+            text-align: center;
+            margin: 5px 0;
+        }
+        .button:hover {
+            background-color: #2D2D4A;
+        }
+        .os-container {
+            margin-top: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: center;
+        }
+        th {
+            background-color: #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Criar Novo Pedido</h1>
+</header>
+
+<div class="container">
+    <form action="{% url 'novo_pedido' %}" method="POST">
+        {% csrf_token %}
+        
+        <div class="form-group">
+            <label for="cliente">Selecione o Cliente:</label>
+            <select id="cliente" name="cliente" required>
+                <option value="">Selecione um cliente</option>
+                {% for cliente in clientes %}
+                    <option value="{{ cliente.id }}">{{ cliente.nome }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <button type="button" class="button" onclick="adicionarOS()">Adicionar Ordem de Serviço</button>
+
+        <div class="os-container" id="os-list">
+            <!-- As ordens de serviço serão adicionadas aqui dinamicamente -->
+        </div>
+
+        <button type="submit" class="button">Finalizar Pedido</button>
+        <a href="{% url 'home' %}" class="button" style="background-color: #e67e22;">Menu</a>
+    </form>
+</div>
+
+<script>
+    function adicionarOS() {
+        const osList = document.getElementById('os-list');
+        const osItem = document.createElement('div');
+        osItem.className = 'os-item';
+        osItem.innerHTML = `
+            <h3>Ordem de Serviço</h3>
+            <div class="form-group">
+                <label>Produto:</label>
+                <select name="produto" required>
+                    <option value="">Selecione um produto</option>
+                    {% for produto in produtos %}
+                    <option value="{{ produto.id }}">{{ produto }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Descrição da OS:</label>
+                <input type="text" name="descricao" required>
+            </div>
+            <div class="form-group">
+                <label>Cor:</label>
+                <input type="text" name="cor" required>
+            </div>
+            <div class="form-group">
+                <label>Quantidade:</label>
+                <input type="number" name="quantidade" min="0" required>
+            </div>
+            <div class="form-group">
+                <label>Valor:</label>
+                <input type="number" name="valor" step="0.01" min="0" required>
+            </div>
+            <div class="form-group">
+                <label>Prazo:</label>
+                <input type="date" name="prazo">
+            </div>
+            <div class="form-group">
+                <label>Bordado:</label>
+                <input type="checkbox" name="bordado">
+            </div>
+            <div class="form-group">
+                <label>Estampa:</label>
+                <input type="checkbox" name="estampa">
+            </div>
+            <h4>Tamanhos:</h4>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Tamanho</th>
+                        <th>Masculinos</th>
+                        <th>Femininos</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>PP</td>
+                        <td><input type="number" name="pp_masculino" min="0" value="0"></td>
+                        <td><input type="number" name="pp_feminino" min="0" value="0"></td>
+                    </tr>
+                    <tr>
+                        <td>P</td>
+                        <td><input type="number" name="p_masculino" min="0" value="0"></td>
+                        <td><input type="number" name="p_feminino" min="0" value="0"></td>
+                    </tr>
+                    <tr>
+                        <td>M</td>
+                        <td><input type="number" name="m_masculino" min="0" value="0"></td>
+                        <td><input type="number" name="m_feminino" min="0" value="0"></td>
+                    </tr>
+                    <tr>
+                        <td>G</td>
+                        <td><input type="number" name="g_masculino" min="0" value="0"></td>
+                        <td><input type="number" name="g_feminino" min="0" value="0"></td>
+                    </tr>
+                    <tr>
+                        <td>GG</td>
+                        <td><input type="number" name="gg_masculino" min="0" value="0"></td>
+                        <td><input type="number" name="gg_feminino" min="0" value="0"></td>
+                    </tr>
+                    <tr>
+                        <td>XG</td>
+                        <td><input type="number" name="xg_masculino" min="0" value="0"></td>
+                        <td><input type="number" name="xg_feminino" min="0" value="0"></td>
+                    </tr>
+                    <tr>
+                        <td>Especial</td>
+                        <td><input type="number" name="esp_masculino" min="0" value="0"></td>
+                        <td><input type="number" name="esp_feminino" min="0" value="0"></td>
+                    </tr>
+                </tbody>
+            </table>
+        `;
+        osList.appendChild(osItem);  // Adiciona o novo item de OS à lista
+    }
+</script>
+
+</body>
+</html>
