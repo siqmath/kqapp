@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Detalhes do Pedido - {{ pedido.numero }}</title>
+    <title>Detalhes do Pedido - {{ pedido.id }}</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -18,16 +18,29 @@
             padding: 20px;
             text-align: center;
         }
+        .container {
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h2 {
+            margin-top: 20px;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 5px;
+        }
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 20px;
+            margin-top: 10px;
             background-color: white;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
         }
         th, td {
             border: 1px solid #ccc;
-            padding: 10px;
+            padding: 8px;
             text-align: center;
         }
         th {
@@ -44,120 +57,225 @@
             transition: background-color 0.3s;
             font-size: 16px;
             margin: 10px 0;
+            cursor: pointer;
         }
         .button:hover {
             background-color: #2D2D4A;
+        }
+        .status-form {
+            margin-top: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between; /* Adicionado para alinhar os botões */
+        }
+        .status-form select {
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+        .order-info {
+            margin-bottom: 15px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .os-item {
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+        }
+        .size-grid {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        .size-grid th, .size-grid td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: center;
+        }
+        .size-grid th {
+            background-color: #f0f0f0;
         }
     </style>
 </head>
 <body>
 
 <header>
-    <h1>Detalhes do Pedido: {{ pedido.numero }}</h1>
+    <h1>Detalhes do Pedido: {{ pedido.id }}</h1>
 </header>
 
-<div>
+<div class="container">
     <h2>Informações do Pedido</h2>
-    <p><strong>Cliente:</strong> {{ pedido.cliente.nome }}</p>
-    <p><strong>Data do Pedido:</strong> {{ pedido.data_pedido|date:"d/m/Y H:i" }}</p>
+    <div class="order-info">
+        <p><strong>Cliente:</strong> {{ pedido.cliente.nome }}</p>
+        <p><strong>Data do Pedido:</strong> {{ pedido.data_criacao|date:"d/m/Y H:i" }}</p>
+        <p><strong>Frete:</strong> R$ {{ pedido.frete }}</p>
+        <p><strong>Observações do Pedido:</strong> {{ pedido.observacoes }}</p>
+    </div>
 
-    <!-- Formulário para atualizar o status do pedido -->
-    <form method="POST" action="{% url 'editar_pedido' pedido.id %}">
-        {% csrf_token %}
-        <p>
-            <strong>Status:</strong>
-            <select name="status" id="status">
-                <option value="preparacao" {% if pedido.status == 'preparacao' %}selected{% endif %}>Preparação</option>
-                <option value="compra" {% if pedido.status == 'compra' %}selected{% endif %}>Compra</option>
-                <option value="corte" {% if pedido.status == 'corte' %}selected{% endif %}>Corte</option>
-                <option value="personalizacao" {% if pedido.status == 'personalizacao' %}selected{% endif %}>Personalização</option>
-                <option value="costura" {% if pedido.status == 'costura' %}selected{% endif %}>Costura</option>
-                <option value="embalagem" {% if pedido.status == 'embalagem' %}selected{% endif %}>Embalagem</option>
-            </select>
-            <button type="submit" class="button">Atualizar Status</button>
-        </p>
-    </form>
+    <div class="status-form">
+        <form id="atualizarStatusForm" method="post" action="{% url 'atualizar_status_pedido' pedido.id %}">
+            {% csrf_token %}
+            <div>
+                <label for="status"><strong>Status:</strong></label>
+                <select name="status" id="status">
+                    <option value="analise" {% if pedido.status == 'analise' %}selected{% endif %}>Análise</option>
+                    <option value="aprovado" {% if pedido.status == 'aprovado' %}selected{% endif %}>Aprovado</option>
+                    <option value="compra" {% if pedido.status == 'compra' %}selected{% endif %}>Compra</option>
+                    <option value="corte" {% if pedido.status == 'corte' %}selected{% endif %}>Corte</option>
+                    <option value="personalizacao" {% if pedido.status == 'personalizacao' %}selected{% endif %}>Personalização</option>
+                    <option value="costura" {% if pedido.status == 'costura' %}selected{% endif %}>Costura</option>
+                    <option value="embalagem" {% if pedido.status == 'embalagem' %}selected{% endif %}>Embalagem</option>
+                    <option value="enviado" {% if pedido.status == 'enviado' %}selected{% endif %}>Enviado</option>
+                </select>
+                <button type="submit" class="button">Atualizar Status</button>
+            </div>
+        </form>
+        <a href="{% url 'gerar_contrato_pedido' pedido.id %}" class="button">Gerar Contrato</a>
+    </div>
+
+    <h2>Pagamentos</h2>
+    <ul>
+        {% for pagamento in pagamentos %}
+            <li>Valor: R$ {{ pagamento.valor_pago }} - Data: {{ pagamento.data_pagamento }}</li>
+        {% endfor %}
+    </ul>
+    <p><strong>Total Pago:</strong> R$ {{ total_pago }}</p>
+    <p><strong>Saldo Restante:</strong> R$ {{ saldo_restante }}</p>
+    <a href="{% url 'adicionar_pagamento' pedido_id=pedido.id %}" class="button">Adicionar Pagamento</a>
 
     <h2>Ordens de Serviço Associadas</h2>
-    <table>
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Produto</th>
-                <th>Descrição</th>
-                <th>Cor</th>
-                <th>Quantidade</th>
-                <th>Valor</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for ordem in ordens_de_servico %}
-            <tr>
-                <td>{{ ordem.id }}</td>
-                <td>{{ ordem.produto.tipo.nome }} - {{ ordem.produto.material.nome }}</td>
-                <td>{{ ordem.descricao }}</td>
-                <td>{{ ordem.cor }}</td>
-                <td>{{ ordem.quantidade }}</td>
-                <td>R$ {{ ordem.valor }}</td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="6">Nenhuma ordem de serviço encontrada para este pedido.</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    {% if ordens_de_servico %}
+        {% for ordem in ordens_de_servico %}
+            <div class="os-item">
+                <h3>Ordem de Serviço #{{ ordem.id }}</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Produto</th>
+                            <th>Preço Unitário</th>
+                            <th>Quantidade Total</th>
+                            <th>Observações</th>
+                            <th>Mockup</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>{{ ordem.id }}</td>
+                            <td>{{ ordem.produto.nome }}</td>
+                            <td>R$ {{ ordem.preco_unitario }}</td>
+                            <td>
+                                {% with total_quantidade=ordem.pp_masculino|add:ordem.pp_feminino|add:ordem.p_masculino|add:ordem.p_feminino|add:ordem.m_masculino|add:ordem.m_feminino|add:ordem.g_masculino|add:ordem.g_feminino|add:ordem.gg_masculino|add:ordem.gg_feminino|add:ordem.xg_masculino|add:ordem.xg_feminino|add:ordem.esp_masculino|add:ordem.esp_feminino %}
+                                    {{ total_quantidade }}
+                                {% endwith %}
+                            </td>
+                            <td>{{ ordem.observacoes }}</td>
+                            <td>
+                                {% if ordem.mockup %}
+                                    <a href="{{ ordem.mockup.url }}" >
+                                        <img src="{{ ordem.mockup.url }}" alt="Mockup da Ordem de Serviço" style="max-width: 100px; max-height: 100px;">
+                                    </a>
+                                {% else %}
+                                    Nenhum mockup disponível
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
 
-    <h2>Grade de Tamanhos</h2>
-    <table>
-        <thead>
-            <tr>
-                <th>Tamanho</th>
-                <th>Masculino</th>
-                <th>Feminino</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>PP</td>
-                <td>{{ tamanhos.pp_masculino }}</td>
-                <td>{{ tamanhos.pp_feminino }}</td>
-            </tr>
-            <tr>
-                <td>P</td>
-                <td>{{ tamanhos.p_masculino }}</td>
-                <td>{{ tamanhos.p_feminino }}</td>
-            </tr>
-            <tr>
-                <td>M</td>
-                <td>{{ tamanhos.m_masculino }}</td>
-                <td>{{ tamanhos.m_feminino }}</td>
-            </tr>
-            <tr>
-                <td>G</td>
-                <td>{{ tamanhos.g_masculino }}</td>
-                <td>{{ tamanhos.g_feminino }}</td>
-            </tr>
-            <tr>
-                <td>GG</td>
-                <td>{{ tamanhos.gg_masculino }}</td>
-                <td>{{ tamanhos.gg_feminino }}</td>
-            </tr>
-            <tr>
-                <td>XG</td>
-                <td>{{ tamanhos.xg_masculino }}</td>
-                <td>{{ tamanhos.xg_feminino }}</td>
-            </tr>
-            <tr>
-                <td>Especial</td>
-                <td>{{ tamanhos.esp_masculino }}</td>
-                <td>{{ tamanhos.esp_feminino }}</td>
-            </tr>
-        </tbody>
-    </table>
+                <h4>Grade de Tamanhos</h4>
+                <table class="size-grid">
+                    <thead>
+                        <tr>
+                            <th>Tamanho</th>
+                            <th>Masculino</th>
+                            <th>Feminino</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>PP</td>
+                            <td>{{ ordem.pp_masculino }}</td>
+                            <td>{{ ordem.pp_feminino }}</td>
+                        </tr>
+                        <tr>
+                            <td>P</td>
+                            <td>{{ ordem.p_masculino }}</td>
+                            <td>{{ ordem.p_feminino }}</td>
+                        </tr>
+                        <tr>
+                            <td>M</td>
+                            <td>{{ ordem.m_masculino }}</td>
+                            <td>{{ ordem.m_feminino }}</td>
+                        </tr>
+                        <tr>
+                            <td>G</td>
+                            <td>{{ ordem.g_masculino }}</td>
+                            <td>{{ ordem.g_feminino }}</td>
+                        </tr>
+                        <tr>
+                            <td>GG</td>
+                            <td>{{ ordem.gg_masculino }}</td>
+                            <td>{{ ordem.gg_feminino }}</td>
+                        </tr>
+                        <tr>
+                            <td>XG</td>
+                            <td>{{ ordem.xg_masculino }}</td>
+                            <td>{{ ordem.xg_feminino }}</td>
+                        </tr>
+                        <tr>
+                            <td>Especial</td>
+                            <td>{{ ordem.esp_masculino }}</td>
+                            <td>{{ ordem.esp_feminino }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <a href="{% url 'gerar_folha_corte_costura' os_id=ordem.id %}" class="button">Gerar Folha de Corte e Costura</a>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>Nenhuma ordem de serviço encontrada para este pedido.</p>
+    {% endif %}
 
+    <a href="{% url 'home' %}" class="button" style="background-color: #e67e22;">Menu</a>
     <a href="{% url 'visualizar_producao' %}" class="button">Voltar</a>
 </div>
+
+<script>
+    document.getElementById('atualizarStatusForm').addEventListener('submit', function(event) {
+        event.preventDefault(); // Evita o envio padrão do formulário
+
+        var form = event.target;
+        var formData = new FormData(form);
+
+        fetch(form.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest', // Identifica a requisição como AJAX
+                'X-CSRFToken': '{{ csrf_token }}'  // Adiciona o token CSRF ao cabeçalho
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                alert(data.message); // Exibe a mensagem de sucesso
+                // Opcional: Atualizar o status exibido na página sem recarregar
+                location.reload(); // Recarrega a página para atualizar o status
+            } else {
+                alert('Erro: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            alert('Ocorreu um erro ao atualizar o status.');
+        });
+    });
+</script>
 
 </body>
 </html>

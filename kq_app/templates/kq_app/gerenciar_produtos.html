@@ -33,11 +33,13 @@
             display: block;
             margin-bottom: 5px;
         }
-        .form-group input {
+        .form-group input,
+        .form-group select {
             width: 100%;
             padding: 10px;
             border: 1px solid #ccc;
             border-radius: 4px;
+            box-sizing: border-box; /* Garante que o padding não aumente a largura */
         }
         .button {
             display: inline-block;
@@ -56,21 +58,34 @@
         }
         .button-center {
             display: block;
-            margin: 20px auto; /* Centraliza o botão */
-            width: fit-content; /* Ajusta a largura do botão ao conteúdo */
+            margin: 20px auto;
+            width: fit-content;
+            text-align: center; /* Centraliza o texto dentro do botão */
         }
         table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 20px;
         }
-        th, td {
+        th,
+        td {
             border: 1px solid #ccc;
             padding: 10px;
             text-align: center;
         }
         th {
             background-color: #f0f0f0;
+        }
+        .delete-button {
+            background-color: #c0392b;
+        }
+        .delete-button:hover {
+            background-color: #943126;
+        }
+        .actions {
+            display: flex;
+            justify-content: center; /* Alinha os botões horizontalmente */
+            gap: 5px; /* Espaçamento entre os botões */
         }
     </style>
 </head>
@@ -81,51 +96,58 @@
 </header>
 
 <div class="container">
-    <form action="{% url 'gerenciar_produtos' %}" method="POST">  <!-- URL onde o formulário será enviado -->
-        {% csrf_token %}  <!-- Proteção CSRF -->
+    <form action="{% url 'gerenciar_produtos' %}" method="POST">
+        {% csrf_token %}
 
         <div class="form-group">
-            <label for="tipo">Tipo:</label>
-            <input type="text" id="tipo" name="tipo" required placeholder="Informe o tipo do produto">
+            <label for="{{ form.nome.id_for_label }}">Nome:</label>
+            {{ form.nome }}
         </div>
 
         <div class="form-group">
-            <label for="material">Material:</label>
-            <input type="text" id="material" name="material" required placeholder="Informe o material do produto">
+            <label for="{{ form.material.id_for_label }}">Material:</label>
+            {{ form.material }}
         </div>
 
         <div class="form-group">
-            <label for="rendimento">Rendimento:</label>
-            <input type="number" step="0.01" id="rendimento" name="rendimento" required placeholder="Informe o rendimento">
+            <label for="{{ form.rendimento.id_for_label }}">Rendimento:</label>
+            {{ form.rendimento }}
+        </div>
+
+        <div class="form-group">
+            <label for="{{ form.unidade_medida.id_for_label }}">Unidade de Medida:</label>
+            {{ form.unidade_medida }}
         </div>
 
         <button type="submit" class="button">Cadastrar Produto</button>
     </form>
 
-    <button class="button button-center" onclick="window.location.href='{% url 'home' %}'">Voltar para Home</button>  <!-- Botão de Voltar para Home --> 
+    <a href="{% url 'home' %}" class="button button-center">Voltar para Home</a>
 
     <h2>Produtos Registrados</h2>
     <table>
         <thead>
             <tr>
                 <th>ID</th>
-                <th>Tipo</th>
+                <th>Nome</th>
                 <th>Material</th>
                 <th>Rendimento</th>
-                <th>Ações</th>  <!-- Coluna para ações -->
+                <th>Unidade de Medida</th>
+                <th>Ações</th>
             </tr>
         </thead>
         <tbody>
-            {% for produto in produtos %}  <!-- Lista de produtos registrados -->
+            {% for produto in produtos %}
                 <tr>
                     <td>{{ produto.id }}</td>
-                    <td>{{ produto.tipo }}</td>
+                    <td>{{ produto.nome }}</td>
                     <td>{{ produto.material }}</td>
                     <td>{{ produto.rendimento }}</td>
-                    <td>
-                        <form action="{% url 'excluir_produto' produto.id %}" method="POST" style="display:inline;">  <!-- Formulário para excluir o produto -->
+                    <td>{{ produto.unidade_medida }}</td>
+                    <td class="actions">
+                        <form action="{% url 'excluir_produto' produto.id %}" method="POST">
                             {% csrf_token %}
-                            <button type="submit" class="button" style="background-color: #c0392b;">Excluir</button>  <!-- Botão de excluir -->
+                            <button type="submit" class="button delete-button">Excluir</button>
                         </form>
                     </td>
                 </tr>

@@ -15,37 +15,45 @@ class ClienteForm(forms.ModelForm):
         }
 
 class PedidoForm(forms.ModelForm):
-    cliente = forms.CharField(
-        max_length=200,
-        widget=forms.TextInput(attrs={'class': 'form-control', 'id': 'cliente-autocomplete'})
-    )
-
     class Meta:
         model = Pedido
-        fields = ['cliente', 'data_entrega', 'observacoes']
+        fields = ['cliente', 'data_entrega', 'observacoes', 'frete']
         widgets = {
+            'cliente': forms.Select(attrs={'class': 'form-control'}),
             'data_entrega': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'observacoes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'frete': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
         }
 
-    def clean_cliente(self):
-        cliente_nome = self.cleaned_data['cliente']
-        try:
-            cliente = Cliente.objects.get(nome=cliente_nome)
-            return cliente
-        except Cliente.DoesNotExist:
-            raise forms.ValidationError("Cliente não encontrado.")
-
 class OrdemDeServicoForm(forms.ModelForm):
-    mockup = forms.FileField(required=False, widget=forms.FileInput(attrs={'class': 'form-control'}))
-
     class Meta:
         model = OrdemDeServico
-        fields = ['produto', 'quantidade', 'observacoes', 'mockup']
+        fields = ['produto', 'preco_unitario', 'quantidade_digitada', 'cor_tecido', 'observacoes', 'mockup',
+                  'pp_masculino', 'pp_feminino', 'p_masculino', 'p_feminino',
+                  'm_masculino', 'm_feminino', 'g_masculino', 'g_feminino',
+                  'gg_masculino', 'gg_feminino', 'xg_masculino', 'xg_feminino',
+                  'esp_masculino', 'esp_feminino']
         widgets = {
             'produto': forms.Select(attrs={'class': 'form-control'}),
-            'quantidade': forms.NumberInput(attrs={'class': 'form-control'}),
+            'preco_unitario': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'quantidade_digitada': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
+            'cor_tecido': forms.TextInput(attrs={'class': 'form-control'}),  # Widget para cor_tecido
             'observacoes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'mockup': forms.FileInput(attrs={'class': 'form-control'}),
+            'pp_masculino': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
+            'pp_feminino': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
+            'p_masculino': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
+            'p_feminino': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
+            'm_masculino': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
+            'm_feminino': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
+            'g_masculino': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
+            'g_feminino': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
+            'gg_masculino': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
+            'gg_feminino': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
+            'xg_masculino': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
+            'xg_feminino': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
+            'esp_masculino': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
+            'esp_feminino': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
         }
 
 OrdemDeServicoFormSet = formset_factory(OrdemDeServicoForm, extra=1, can_delete=True)
@@ -53,13 +61,12 @@ OrdemDeServicoFormSet = formset_factory(OrdemDeServicoForm, extra=1, can_delete=
 class ProdutoForm(forms.ModelForm):
     class Meta:
         model = Produto
-        fields = ['nome', 'descricao', 'preco', 'codigo_barras', 'unidade_medida']
+        fields = ['nome', 'material', 'rendimento', 'unidade_medida']
         widgets = {
             'nome': forms.TextInput(attrs={'class': 'form-control'}),
-            'descricao': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-            'preco': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
-            'codigo_barras': forms.TextInput(attrs={'class': 'form-control'}),
-            'unidade_medida': forms.TextInput(attrs={'class': 'form-control'}),
+            'material': forms.TextInput(attrs={'class': 'form-control'}),
+            'rendimento': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'unidade_medida': forms.Select(attrs={'class': 'form-control'}),
         }
 
 class CustoForm(forms.ModelForm):

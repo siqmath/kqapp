@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 
 # Caminho base do projeto
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # Chave secreta (use variáveis de ambiente em produção)
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'P0kerstars!')
@@ -62,7 +62,7 @@ WSGI_APPLICATION = 'sistemakq.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),  # Use os.path.join()
     }
 }
 
@@ -91,12 +91,11 @@ USE_TZ = True
 
 # Arquivos estáticos
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [BASE_DIR / 'static']
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]  # Use os.path.join()
 
 # Arquivos de mídia
-
-BASE_DIR = Path(__file__).resolve().parent.parent
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 ALLOWED_HOSTS = ['127.0.0.1', 'localhost']

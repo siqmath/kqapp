@@ -86,6 +86,20 @@
             color: red;
             margin-top: 5px;
         }
+
+        /* Estilo para o botão de remover */
+        .remove-os {
+            background-color: #e74c3c;
+            color: white;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .remove-os:hover {
+            background-color: #c0392b;
+        }
     </style>
 </head>
 <body>
@@ -123,21 +137,61 @@
             {% endif %}
         </div>
 
+         <div class="form-group">
+            <label for="{{ pedido_form.frete.id_for_label }}">Frete (R$):</label>
+            {{ pedido_form.frete }}
+            {% if pedido_form.frete.errors %}
+                <ul class="errorlist">{{ pedido_form.frete.errors }}</ul>
+            {% endif %}
+        </div>
+
         <h2>Ordens de Serviço</h2>
         <div class="os-container" id="os-list">
             {{ ordem_de_servico_formset.management_form }}
             {% for form in ordem_de_servico_formset %}
                 <div class="os-item">
                     <h3>Ordem de Serviço</h3>
-                    {% for field in form %}
-                        <div class="form-group">
-                            <label for="{{ field.id_for_label }}">{{ field.label }}:</label>
-                            {{ field }}
-                            {% if field.errors %}
-                                <ul class="errorlist">{{ field.errors }}</ul>
-                            {% endif %}
-                        </div>
-                    {% endfor %}
+                     <button type="button" class="remove-os">Remover</button>  <!-- Botão de remover -->
+                     <div class="form-group">
+                        <label for="{{ form.produto.id_for_label }}">Produto:</label>
+                        <select name="{{ form.prefix }}-produto" id="{{ form.produto.id_for_label }}" class="form-control">
+                            <option value="">Selecione um produto</option>
+                            {% for produto in produtos %}
+                                <option value="{{ produto.id }}">{{ produto.nome }}</option>
+                            {% endfor %}
+                        </select>
+                        {% if form.produto.errors %}
+                            <ul class="errorlist">{{ form.produto.errors }}</ul>
+                        {% endif %}
+                    </div>
+                     <div class="form-group">
+                        <label for="{{ form.preco_unitario.id_for_label }}">Preço Unitário (R$):</label>
+                        {{ form.preco_unitario }}
+                        {% if form.preco_unitario.errors %}
+                            <ul class="errorlist">{{ form.preco_unitario.errors }}</ul>
+                        {% endif %}
+                    </div>
+                    <div class="form-group">
+                        <label for="{{ form.quantidade_digitada.id_for_label }}">Quantidade:</label>
+                        {{ form.quantidade_digitada }}
+                        {% if form.quantidade_digitada.errors %}
+                            <ul class="errorlist">{{ form.quantidade_digitada.errors }}</ul>
+                        {% endif %}
+                    </div>
+                    <div class="form-group">
+                        <label for="{{ form.observacoes.id_for_label }}">Observações:</label>
+                        {{ form.observacoes }}
+                        {% if form.observacoes.errors %}
+                            <ul class="errorlist">{{ form.observacoes.errors }}</ul>
+                        {% endif %}
+                    </div>
+                    <div class="form-group">
+                        <label for="{{ form.mockup.id_for_label }}">Mockup:</label>
+                        {{ form.mockup }}
+                        {% if form.mockup.errors %}
+                            <ul class="errorlist">{{ form.mockup.errors }}</ul>
+                        {% endif %}
+                    </div>
 
                     <h4>Tabela de Tamanhos</h4>
                     <table>
@@ -151,49 +205,160 @@
                         <tbody>
                             <tr>
                                 <td>PP</td>
-                                <td><input type="number" name="{{ form.prefix }}-pp_masculino" value="0"></td>
-                                <td><input type="number" name="{{ form.prefix }}-pp_feminino" value="0"></td>
+                                <td>{{ form.pp_masculino }}</td>
+                                <td>{{ form.pp_feminino }}</td>
                             </tr>
                             <tr>
                                 <td>P</td>
-                                <td><input type="number" name="{{ form.prefix }}-p_masculino" value="0"></td>
-                                <td><input type="number" name="{{ form.prefix }}-p_feminino" value="0"></td>
+                                <td>{{ form.p_masculino }}</td>
+                                <td>{{ form.p_feminino }}</td>
                             </tr>
                             <tr>
                                 <td>M</td>
-                                <td><input type="number" name="{{ form.prefix }}-m_masculino" value="0"></td>
-                                <td><input type="number" name="{{ form.prefix }}-m_feminino" value="0"></td>
+                                <td>{{ form.m_masculino }}</td>
+                                <td>{{ form.m_feminino }}</td>
                             </tr>
                             <tr>
                                 <td>G</td>
-                                <td><input type="number" name="{{ form.prefix }}-g_masculino" value="0"></td>
-                                <td><input type="number" name="{{ form.prefix }}-g_feminino" value="0"></td>
+                                <td>{{ form.g_masculino }}</td>
+                                <td>{{ form.g_feminino }}</td>
                             </tr>
                             <tr>
                                 <td>GG</td>
-                                <td><input type="number" name="{{ form.prefix }}-gg_masculino" value="0"></td>
-                                <td><input type="number" name="{{ form.prefix }}-gg_feminino" value="0"></td>
+                                <td>{{ form.gg_masculino }}</td>
+                                <td>{{ form.gg_feminino }}</td>
                             </tr>
                             <tr>
                                 <td>XG</td>
-                                <td><input type="number" name="{{ form.prefix }}-xg_masculino" value="0"></td>
-                                <td><input type="number" name="{{ form.prefix }}-xg_feminino" value="0"></td>
+                                <td>{{ form.xg_masculino }}</td>
+                                <td>{{ form.xg_feminino }}</td>
                             </tr>
                             <tr>
                                 <td>ESP</td>
-                                <td><input type="number" name="{{ form.prefix }}-esp_masculino" value="0"></td>
-                                <td><input type="number" name="{{ form.prefix }}-esp_feminino" value="0"></td>
+                                <td>{{ form.esp_masculino }}</td>
+                                <td>{{ form.esp_feminino }}</td>
                             </tr>
                         </tbody>
                     </table>
+                     <input type="hidden" name="{{ form.prefix }}-DELETE" id="id_{{ form.prefix }}-DELETE" value="{{ form.DELETE.value }}">
                 </div>
             {% endfor %}
         </div>
 
+        <button type="button" id="add-os" class="button">Adicionar Ordem de Serviço</button>
+
         <button type="submit" class="button">Finalizar Pedido</button>
         <a href="{% url 'home' %}" class="button" style="background-color: #e67e22;">Menu</a>
     </form>
+    {% if mensagem_erro %}
+        <p style="color: red;">{{ mensagem_erro }}</p>
+    {% endif %}
 </div>
 
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function() {
+        // Adiciona uma nova ordem de serviço
+        $('#add-os').click(function() {
+            var form_idx = $('#id_ordem_de_servico-TOTAL_FORMS').val();
+
+            var newOrderItem = `
+                <div class="os-item">
+                    <h3>Ordem de Serviço</h3>
+                    <button type="button" class="remove-os">Remover</button>
+                     <div class="form-group">
+                        <label for="id_ordem_de_servico-${form_idx}-produto">Produto:</label>
+                        <select name="ordem_de_servico-${form_idx}-produto" class="form-control" required>
+                            <option value="">Selecione um produto</option>
+                            {% for produto in produtos %}
+                                <option value="{{ produto.id }}">{{ produto.nome }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                     <div class="form-group">
+                        <label for="id_ordem_de_servico-${form_idx}-preco_unitario">Preço Unitário (R$):</label>
+                        <input type="number" name="ordem_de_servico-${form_idx}-preco_unitario" class="form-control" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="id_ordem_de_servico-${form_idx}-quantidade_digitada">Quantidade:</label>
+                        <input type="number" name="ordem_de_servico-${form_idx}-quantidade_digitada" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="id_ordem_de_servico-${form_idx}-observacoes">Observações:</label>
+                        <textarea name="ordem_de_servico-${form_idx}-observacoes" class="form-control"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="id_ordem_de_servico-${form_idx}-mockup">Mockup:</label>
+                        <input type="file" name="ordem_de_servico-${form_idx}-mockup" class="form-control">
+                    </div>
+
+                    <h4>Tabela de Tamanhos</h4>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Tamanho</th>
+                                <th>Masculino</th>
+                                <th>Feminino</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>PP</td>
+                                <td><input type="number" name="ordem_de_servico-${form_idx}-pp_masculino" class="form-control tamanho-input" value="0"></td>
+                                <td><input type="number" name="ordem_de_servico-${form_idx}-pp_feminino" class="form-control tamanho-input" value="0"></td>
+                            </tr>
+                            <tr>
+                                <td>P</td>
+                                <td><input type="number" name="ordem_de_servico-${form_idx}-p_masculino" class="form-control tamanho-input" value="0"></td>
+                                <td><input type="number" name="ordem_de_servico-${form_idx}-p_feminino" class="form-control tamanho-input" value="0"></td>
+                            </tr>
+                            <tr>
+                                <td>M</td>
+                                <td><input type="number" name="ordem_de_servico-${form_idx}-m_masculino" class="form-control tamanho-input" value="0"></td>
+                                <td><input type="number" name="ordem_de_servico-${form_idx}-m_feminino" class="form-control tamanho-input" value="0"></td>
+                            </tr>
+                            <tr>
+                                <td>G</td>
+                                <td><input type="number" name="ordem_de_servico-${form_idx}-g_masculino" class="form-control tamanho-input" value="0"></td>
+                                <td><input type="number" name="ordem_de_servico-${form_idx}-g_feminino" class="form-control tamanho-input" value="0"></td>
+                            </tr>
+                            <tr>
+                                <td>GG</td>
+                                <td><input type="number" name="ordem_de_servico-${form_idx}-gg_masculino" class="form-control tamanho-input" value="0"></td>
+                                <td><input type="number" name="ordem_de_servico-${form_idx}-gg_feminino" class="form-control tamanho-input" value="0"></td>
+                            </tr>
+                            <tr>
+                                <td>XG</td>
+                                <td><input type="number" name="ordem_de_servico-${form_idx}-xg_masculino" class="form-control tamanho-input" value="0"></td>
+                                <td><input type="number" name="ordem_de_servico-${form_idx}-xg_feminino" class="form-control tamanho-input" value="0"></td>
+                            </tr>
+                            <tr>
+                                <td>ESP</td>
+                                <td><input type="number" name="ordem_de_servico-${form_idx}-esp_masculino" class="form-control tamanho-input" value="0"></td>
+                                <td><input type="number" name="ordem_de_servico-${form_idx}-esp_feminino" class="form-control tamanho-input" value="0"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                     <input type="hidden" name="ordem_de_servico-${form_idx}-DELETE" id="id_ordem_de_servico-${form_idx}-DELETE">
+                </div>
+            `;
+
+            $('#os-list').append(newOrderItem);
+            form_idx++;
+            $('#id_ordem_de_servico-TOTAL_FORMS').val(form_idx);
+            $('#id_ordem_de_servico-TOTAL_FORMS').attr('value', form_idx);
+        });
+
+        // Remove uma ordem de serviço
+        $(document).on('click', '.remove-os', function() {
+            $(this).closest('.os-item').remove();
+
+            var form_idx = $('#id_ordem_de_servico-TOTAL_FORMS').val();
+            form_idx--;
+            $('#id_ordem_de_servico-TOTAL_FORMS').val(form_idx);
+            $('#id_ordem_de_servico-TOTAL_FORMS').attr('value', form_idx);
+        });
+    });
+</script>
 </body>
 </html>
