@@ -82,7 +82,7 @@ def gerar_contrato_pdf(pedido):
     info_pedido = [
         f"Data do Pedido: {pedido.data_criacao.strftime('%d/%m/%Y %H:%M')}\n"
     ]
-
+#a tha é braba
     for info in info_pedido:
         ptext = Paragraph(info, normal_style)
         ptext.wrapOn(p, 500, 50)
