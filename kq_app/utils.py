@@ -10,6 +10,7 @@ from datetime import date
 import io
 from reportlab.lib.units import inch
 from django.templatetags.static import static
+from django.core.mail import EmailMessage
 
 def desenhar_elemento(canvas, y, elemento, x=50, espacamento=12):
     elemento.wrapOn(canvas, 500, 800)
@@ -62,7 +63,7 @@ def gerar_contrato_pdf(pedido):
 
     # Adicionar a logo da KQ
     logo_path = os.path.join(settings.BASE_DIR, 'static', 'Logo KQ - azul.png')
-    logo = Image(logo_path, width=2*inch, height=2*inch)
+    logo = Image(logo_path, width=1.5*inch, height=1.5*inch)  # Aumentar o tamanho em 100%
     y = desenhar_elemento(p, y, logo)
 
     # Dados do cliente
@@ -149,7 +150,7 @@ def gerar_contrato_pdf(pedido):
         # Adicionar mockup (se existir)
         if ordem.mockup:
             try:
-                img = Image(ordem.mockup.path, width=2*inch, height=2*inch)
+                img = Image(ordem.mockup.path, width=4*inch, height=4*inch)  # Aumentar o tamanho em 100%
                 y = desenhar_elemento(p, y, img, espacamento=2.5*inch)
             except Exception as e:
                 print(f"Erro ao adicionar imagem: {e}")
