@@ -13,10 +13,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = env('DJANGO_SECRET_KEY', default='P0kerstars!')
 
 # Debug
-DEBUG = env.bool('DJANGO_DEBUG', default=False)
+DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
 # Hosts permitidos
-ALLOWED_HOSTS = env.list('DJANGO_ALLOWED_HOSTS', default=['127.0.0.1', 'localhost'])
+ALLOWED_HOSTS = ['fierce-anchorage-52530-c6947e968705.herokuapp.com', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '').split(',')
 
 # Aplicativos instalados
 INSTALLED_APPS = [
