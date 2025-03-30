@@ -16,7 +16,7 @@ SECRET_KEY = env('DJANGO_SECRET_KEY', default='P0kerstars!')
 DEBUG = env.bool('DJANGO_DEBUG', default=False)
 
 # Hosts permitidos
-ALLOWED_HOSTS = env.list('DJANGO_ALLOWED_HOSTS', default=['127.0.0.1', 'localhost'])
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '0.0.0.0', '3.16.81.123', '*']
 
 # Aplicativos instalados
 INSTALLED_APPS = [
