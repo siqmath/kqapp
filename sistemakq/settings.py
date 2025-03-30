@@ -65,9 +65,11 @@ TEMPLATES = [
 # WSGI
 WSGI_APPLICATION = 'sistemakq.wsgi.application'
 
-# Banco de Dados
 DATABASES = {
-    'default': env.db('DATABASE_URL', default='sqlite:////' + str(BASE_DIR / 'db.sqlite3'))
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+    }
 }
 
 # Validação de senhas
