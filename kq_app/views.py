@@ -366,3 +366,32 @@ def gerar_contrato_pedido(request, pedido_id):
     response = HttpResponse(pdf_file, content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="contrato_pedido_{pedido.id}.pdf"'
     return response
+
+def excluir_pedido(request, pedido_id):
+    """
+    Exclui um pedido e todas as suas dependências (ordens de serviço e pagamentos)
+    de forma transacional. Isso garante que, se a exclusão de qualquer dependência falhar,
+    todo o processo seja revertido, mantendo a integridade dos dados.
+    """
+    pedido = get_object_or_404(Pedido, id=pedido_id)
+
+    try:
+        with transaction.atomic():
+            # Exclui todas as ordens de serviço associadas ao pedido
+            OrdemDeServico.objects.filter(pedido=pedido).delete()
+
+            # Exclui todos os pagamentos associados ao pedido
+            Pagamento.objects.filter(pedido=pedido).delete()
+
+            # Finalmente, exclui o pedido
+            pedido.delete()
+
+        messages.success(request, 'Pedido e todos os seus detalhes (ordens de serviço e pagamentos) excluídos com sucesso!')
+
+    except Exception as e:
+        messages.error(request, f'Erro ao excluir pedido: {e}. Consulte os logs para mais detalhes.')
+        # Aqui, você pode adicionar logging para registrar o erro detalhadamente
+        # import logging
+        # logging.error(f"Erro ao excluir pedido {pedido_id}: {e}", exc_info=True)
+
+    return redirect('visualizar_producao')

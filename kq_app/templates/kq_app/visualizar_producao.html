@@ -50,11 +50,36 @@
             font-size: 16px;
             margin: 10px 0;
             text-align: center;
+            cursor: pointer; /* Adiciona cursor de pointer */
         }
         .button:hover {
             background-color: #2D2D4A;
         }
+        .delete-button {
+            background-color: #e74c3c; /* Vermelho */
+            border: none; /* Remove a borda padrão do botão */
+        }
+        .delete-button:hover {
+            background-color: #c0392b; /* Vermelho mais escuro */
+        }
+        /* Estilo para desabilitar o botão */
+        .delete-button:disabled {
+            background-color: #bdc3c7; /* Cinza claro */
+            color: #7f8c8d; /* Cinza escuro */
+            cursor: not-allowed; /* Muda o cursor para 'not-allowed' */
+        }
     </style>
+    <script>
+        function confirmarExclusao(pedidoId) {
+            if (confirm("Tem certeza que deseja excluir este pedido? Esta ação não pode ser desfeita.")) {
+                // Redireciona para a URL de exclusão
+                window.location.href = '/excluir_pedido/' + pedidoId + '/';
+            } else {
+                // O usuário cancelou a exclusão
+                alert("Exclusão cancelada.");
+            }
+        }
+    </script>
 </head>
 <body>
 
@@ -72,9 +97,9 @@
                 <th>ID do Pedido</th>
                 <th>Cliente</th>
                 <th>Data do Pedido</th>
-                <th>Data de Entrega</th>  <!-- Nova coluna -->
+                <th>Data de Entrega</th>
                 <th>Status</th>
-                <th>Ações</th> <!-- Coluna para ações como visualizar ou editar -->
+                <th>Ações</th>
             </tr>
         </thead>
         <tbody>
@@ -89,10 +114,12 @@
                     {% else %}
                         Não definida
                     {% endif %}
-                </td>  <!-- Exibe a data de entrega -->
+                </td>
                 <td>{{ pedido.status }}</td>
                 <td>
-                    <a href="{% url 'detalhes_pedido' pedido.id %}" class="button">Ver Detalhes</a> <!-- Link para detalhes do pedido -->
+                    <a href="{% url 'detalhes_pedido' pedido.id %}" class="button">Ver Detalhes</a>
+                    <!-- Botão de Excluir -->
+                    <a href="#" class="button delete-button" onclick="confirmarExclusao({{ pedido.id }})">Excluir</a>
                 </td>
             </tr>
             {% empty %}
