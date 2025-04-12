@@ -125,7 +125,7 @@
     </header>
 
     <div class="container">
-        <a href="{% url 'cadastrar_clientes' %}" class="button">Cadastrar Cliente</a>
+        <a href="{% url 'cadastrar_cliente' %}" class="button">Cadastrar Cliente</a>
 
         <form action="{% url 'novo_pedido' %}" method="POST" enctype="multipart/form-data">
             {% csrf_token %}
