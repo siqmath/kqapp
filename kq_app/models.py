@@ -101,8 +101,8 @@ class OrdemDeServico(models.Model):
         max_digits=10, decimal_places=2, verbose_name="Preço Unitário", default=0.00)
     observacoes = models.TextField(
         blank=True, null=True, verbose_name="Observações", default="")
-    mockup = CloudinaryField('mockup', folder='mockups',
-                             blank=True, null=True, verbose_name="Mockup")
+    mockup = CloudinaryField(verbose_name="Mockup",
+                             folder='mockups', blank=True, null=True)
     quantidade_digitada = models.IntegerField(
         default=0, verbose_name="Quantidade Digitada")
     cor_tecido = models.CharField(
