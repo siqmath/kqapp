@@ -1,0 +1,28 @@
+# Arquivos Python
+*.pyc
+__pycache__/
+
+# Arquivos do sistema operacional
+.DS_Store
+Thumbs.db
+
+# Banco de dados
+*.sqlite3
+
+# Diretórios de arquivos estáticos e mídia
+/static
+/media
+
+# Arquivos de ambiente
+.env
+
+# Ambientes virtuais
+venv/
+env/
+
+# Arquivos de log
+*.log
+
+# Outros
+*.swp  # Arquivos de swap do Vim
+*~     # Arquivos de backup
