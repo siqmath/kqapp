@@ -12,12 +12,14 @@
             margin: 0;
             padding: 0;
         }
+
         header {
             background-color: #3D3D6A;
             color: white;
             padding: 20px;
             text-align: center;
         }
+
         .container {
             max-width: 800px;
             margin: 20px auto;
@@ -26,20 +28,26 @@
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
+
         .form-group {
             margin-bottom: 15px;
         }
+
         .form-group label {
             display: block;
             margin-bottom: 5px;
         }
-        .form-group select, .form-group input, .form-group textarea {
+
+        .form-group select,
+        .form-group input,
+        .form-group textarea {
             width: 100%;
             padding: 10px;
             border: 1px solid #ccc;
             border-radius: 4px;
-            box-sizing: border-box; /* Garante que o padding não aumente a largura */
+            box-sizing: border-box;
         }
+
         .button {
             display: inline-block;
             background-color: #3D3D6A;
@@ -52,42 +60,49 @@
             font-size: 16px;
             text-align: center;
             margin: 5px 0;
-            cursor: pointer; /* Adiciona cursor de pointer */
+            cursor: pointer;
         }
+
         .button:hover {
             background-color: #2D2D4A;
         }
+
         .os-container {
             margin-top: 20px;
             border: 1px solid #ccc;
             padding: 10px;
             border-radius: 4px;
         }
+
         .os-item {
             margin-bottom: 15px;
             border: 1px solid #ddd;
             padding: 10px;
             border-radius: 4px;
         }
+
         table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 10px;
         }
-        th, td {
+
+        th,
+        td {
             border: 1px solid #ccc;
             padding: 10px;
             text-align: center;
         }
+
         th {
             background-color: #f0f0f0;
         }
+
         .errorlist {
             color: red;
             margin-top: 5px;
         }
 
-        /* Estilo para o botão de remover */
         .remove-os {
             background-color: #e74c3c;
             color: white;
@@ -97,99 +112,104 @@
             cursor: pointer;
             font-size: 14px;
         }
+
         .remove-os:hover {
             background-color: #c0392b;
         }
     </style>
 </head>
+
 <body>
+    <header>
+        <h1>Criar Novo Pedido</h1>
+    </header>
 
-<header>
-    <h1>Criar Novo Pedido</h1>
-</header>
+    <div class="container">
+        <a href="{% url 'cadastrar_clientes' %}" class="button">Cadastrar Cliente</a>
 
-<div class="container">
-    <form action="{% url 'novo_pedido' %}" method="POST" enctype="multipart/form-data">
-        {% csrf_token %}
+        <form action="{% url 'novo_pedido' %}" method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
 
-        <h2>Dados do Pedido</h2>
-        <div class="form-group">
-            <label for="{{ pedido_form.cliente.id_for_label }}">Cliente:</label>
-            {{ pedido_form.cliente }}
-            {% if pedido_form.cliente.errors %}
+            <h2>Dados do Pedido</h2>
+            <div class="form-group">
+                <label for="{{ pedido_form.cliente.id_for_label }}">Cliente:</label>
+                {{ pedido_form.cliente }}
+                {% if pedido_form.cliente.errors %}
                 <ul class="errorlist">{{ pedido_form.cliente.errors }}</ul>
-            {% endif %}
-        </div>
+                {% endif %}
+            </div>
 
-        <div class="form-group">
-            <label for="{{ pedido_form.data_entrega.id_for_label }}">Data de Entrega:</label>
-            {{ pedido_form.data_entrega }}
-            {% if pedido_form.data_entrega.errors %}
+            <div class="form-group">
+                <label for="{{ pedido_form.data_entrega.id_for_label }}">Data de Entrega:</label>
+                {{ pedido_form.data_entrega }}
+                {% if pedido_form.data_entrega.errors %}
                 <ul class="errorlist">{{ pedido_form.data_entrega.errors }}</ul>
-            {% endif %}
-        </div>
+                {% endif %}
+            </div>
 
-        <div class="form-group">
-            <label for="{{ pedido_form.observacoes.id_for_label }}">Observações:</label>
-            {{ pedido_form.observacoes }}
-            {% if pedido_form.observacoes.errors %}
+            <div class="form-group">
+                <label for="{{ pedido_form.observacoes.id_for_label }}">Observações:</label>
+                {{ pedido_form.observacoes }}
+                {% if pedido_form.observacoes.errors %}
                 <ul class="errorlist">{{ pedido_form.observacoes.errors }}</ul>
-            {% endif %}
-        </div>
+                {% endif %}
+            </div>
 
-         <div class="form-group">
-            <label for="{{ pedido_form.frete.id_for_label }}">Frete (R$):</label>
-            {{ pedido_form.frete }}
-            {% if pedido_form.frete.errors %}
+            <div class="form-group">
+                <label for="{{ pedido_form.frete.id_for_label }}">Frete (R$):</label>
+                {{ pedido_form.frete }}
+                {% if pedido_form.frete.errors %}
                 <ul class="errorlist">{{ pedido_form.frete.errors }}</ul>
-            {% endif %}
-        </div>
+                {% endif %}
+            </div>
 
-        <h2>Ordens de Serviço</h2>
-        <div class="os-container" id="os-list">
-            {{ ordem_de_servico_formset.management_form }}
-            {% for form in ordem_de_servico_formset %}
+            <h2>Ordens de Serviço</h2>
+            <div class="os-container" id="os-list">
+                {{ ordem_de_servico_formset.management_form }}
+                {% for form in ordem_de_servico_formset %}
                 <div class="os-item">
                     <h3>Ordem de Serviço</h3>
-                     <button type="button" class="remove-os">Remover</button>  <!-- Botão de remover -->
-                     <div class="form-group">
+                    <button type="button" class="remove-os">Remover</button>
+                    <!-- Botão de remover -->
+                    <div class="form-group">
                         <label for="{{ form.produto.id_for_label }}">Produto:</label>
-                        <select name="{{ form.prefix }}-produto" id="{{ form.produto.id_for_label }}" class="form-control">
+                        <select name="{{ form.prefix }}-produto" id="{{ form.produto.id_for_label }}"
+                            class="form-control">
                             <option value="">Selecione um produto</option>
                             {% for produto in produtos %}
-                                <option value="{{ produto.id }}">{{ produto.nome }}</option>
+                            <option value="{{ produto.id }}">{{ produto.nome }}</option>
                             {% endfor %}
                         </select>
                         {% if form.produto.errors %}
-                            <ul class="errorlist">{{ form.produto.errors }}</ul>
+                        <ul class="errorlist">{{ form.produto.errors }}</ul>
                         {% endif %}
                     </div>
-                     <div class="form-group">
+                    <div class="form-group">
                         <label for="{{ form.preco_unitario.id_for_label }}">Preço Unitário (R$):</label>
                         {{ form.preco_unitario }}
                         {% if form.preco_unitario.errors %}
-                            <ul class="errorlist">{{ form.preco_unitario.errors }}</ul>
+                        <ul class="errorlist">{{ form.preco_unitario.errors }}</ul>
                         {% endif %}
                     </div>
                     <div class="form-group">
                         <label for="{{ form.quantidade_digitada.id_for_label }}">Quantidade:</label>
                         {{ form.quantidade_digitada }}
                         {% if form.quantidade_digitada.errors %}
-                            <ul class="errorlist">{{ form.quantidade_digitada.errors }}</ul>
+                        <ul class="errorlist">{{ form.quantidade_digitada.errors }}</ul>
                         {% endif %}
                     </div>
                     <div class="form-group">
                         <label for="{{ form.observacoes.id_for_label }}">Observações:</label>
                         {{ form.observacoes }}
                         {% if form.observacoes.errors %}
-                            <ul class="errorlist">{{ form.observacoes.errors }}</ul>
+                        <ul class="errorlist">{{ form.observacoes.errors }}</ul>
                         {% endif %}
                     </div>
                     <div class="form-group">
                         <label for="{{ form.mockup.id_for_label }}">Mockup:</label>
                         {{ form.mockup }}
                         {% if form.mockup.errors %}
-                            <ul class="errorlist">{{ form.mockup.errors }}</ul>
+                        <ul class="errorlist">{{ form.mockup.errors }}</ul>
                         {% endif %}
                     </div>
 
@@ -240,29 +260,30 @@
                             </tr>
                         </tbody>
                     </table>
-                     <input type="hidden" name="{{ form.prefix }}-DELETE" id="id_{{ form.prefix }}-DELETE" value="{{ form.DELETE.value }}">
+                    <input type="hidden" name="{{ form.prefix }}-DELETE" id="id_{{ form.prefix }}-DELETE"
+                        value="{{ form.DELETE.value }}">
                 </div>
-            {% endfor %}
-        </div>
+                {% endfor %}
+            </div>
 
-        <button type="button" id="add-os" class="button">Adicionar Ordem de Serviço</button>
+            <button type="button" id="add-os" class="button">Adicionar Ordem de Serviço</button>
 
-        <button type="submit" class="button">Finalizar Pedido</button>
-        <a href="{% url 'home' %}" class="button" style="background-color: #e67e22;">Menu</a>
-    </form>
-    {% if mensagem_erro %}
+            <button type="submit" class="button">Finalizar Pedido</button>
+            <a href="{% url 'home' %}" class="button" style="background-color: #e67e22;">Menu</a>
+        </form>
+        {% if mensagem_erro %}
         <p style="color: red;">{{ mensagem_erro }}</p>
-    {% endif %}
-</div>
+        {% endif %}
+    </div>
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script>
-    $(document).ready(function() {
-        // Adiciona uma nova ordem de serviço
-        $('#add-os').click(function() {
-            var form_idx = $('#id_ordem_de_servico-TOTAL_FORMS').val();
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            // Adiciona uma nova ordem de serviço
+            $('#add-os').click(function () {
+                var form_idx = $('#id_ordem_de_servico-TOTAL_FORMS').val();
 
-            var newOrderItem = `
+                var newOrderItem = `
                 <div class="os-item">
                     <h3>Ordem de Serviço</h3>
                     <button type="button" class="remove-os">Remover</button>
@@ -343,22 +364,23 @@
                 </div>
             `;
 
-            $('#os-list').append(newOrderItem);
-            form_idx++;
-            $('#id_ordem_de_servico-TOTAL_FORMS').val(form_idx);
-            $('#id_ordem_de_servico-TOTAL_FORMS').attr('value', form_idx);
-        });
+                $('#os-list').append(newOrderItem);
+                form_idx++;
+                $('#id_ordem_de_servico-TOTAL_FORMS').val(form_idx);
+                $('#id_ordem_de_servico-TOTAL_FORMS').attr('value', form_idx);
+            });
 
-        // Remove uma ordem de serviço
-        $(document).on('click', '.remove-os', function() {
-            $(this).closest('.os-item').remove();
+            // Remove uma ordem de serviço
+            $(document).on('click', '.remove-os', function () {
+                $(this).closest('.os-item').remove();
 
-            var form_idx = $('#id_ordem_de_servico-TOTAL_FORMS').val();
-            form_idx--;
-            $('#id_ordem_de_servico-TOTAL_FORMS').val(form_idx);
-            $('#id_ordem_de_servico-TOTAL_FORMS').attr('value', form_idx);
+                var form_idx = $('#id_ordem_de_servico-TOTAL_FORMS').val();
+                form_idx--;
+                $('#id_ordem_de_servico-TOTAL_FORMS').val(form_idx);
+                $('#id_ordem_de_servico-TOTAL_FORMS').attr('value', form_idx);
+            });
         });
-    });
-</script>
+    </script>
 </body>
+
 </html>
