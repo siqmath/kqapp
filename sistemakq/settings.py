@@ -19,8 +19,12 @@ SECRET_KEY = env('DJANGO_SECRET_KEY', default='P0kerstars!')
 DEBUG = 'DEVELOPMENT' in os.environ
 
 # Hosts permitidos
-ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=[
-                         'kqapp.herokuapp.com', 'localhost', '127.0.0.1'])
+ALLOWED_HOSTS = [
+    'kqapp-3bd5ea180ee2.herokuapp.com',
+    'localhost',
+    '127.0.0.1',
+    '*',  # temporariamente para teste
+]
 
 # Aplicativos instalados
 INSTALLED_APPS = [
@@ -150,3 +154,12 @@ if not DEBUG:
 CLOUDINARY_STORAGE = {
     'CLOUD_NAME': 'seu-cloud-name',
 }
+
+# Configuração do CSRF
+CSRF_TRUSTED_ORIGINS = [
+    'https://kqapp-3bd5ea180ee2.herokuapp.com',
+    'http://localhost:8000',
+]
+
+# Configuração de segurança para produção
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
