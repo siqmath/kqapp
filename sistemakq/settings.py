@@ -13,7 +13,7 @@ environ.Env.read_env()
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Chave secreta
-SECRET_KEY = env('DJANGO_SECRET_KEY', default='P0kerstars!')
+SECRET_KEY = env('DJANGO_SECRET_KEY', default='django-insecure-k9l2@k3j4m5n6p7q8r9s0t1u2v3w4x5y6z7a8b9c0d1e2f3g4h!')
 
 # Debug
 DEBUG = 'DEVELOPMENT' in os.environ
