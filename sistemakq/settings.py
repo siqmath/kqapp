@@ -1,6 +1,9 @@
 import os
 from pathlib import Path
 import environ
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
 
 # Inicializar environ
 env = environ.Env()
@@ -142,3 +145,8 @@ LOGGING = {
 # Configuração para servir arquivos em produção
 if not DEBUG:
     MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
+
+# Cloudinary settings
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': 'seu-cloud-name',
+}
