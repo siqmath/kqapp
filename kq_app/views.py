@@ -16,6 +16,8 @@ from reportlab.lib.units import inch
 from reportlab.lib.styles import getSampleStyleSheet
 from .utils import gerar_contrato_pdf, enviar_contrato_email
 from django.db import transaction
+from django.core.paginator import Paginator
+
 
 
 def home(request):
