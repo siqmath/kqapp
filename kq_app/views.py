@@ -24,18 +24,54 @@ def home(request):
 
 
 def cadastrar_cliente(request):
-    """Cadastra um novo cliente."""
+    """Cadastra novo cliente, exibe lista com busca, paginação e permite excluir/editar."""
+    # Trata exclusão
     if request.method == 'POST':
-        form = ClienteForm(request.POST)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Cliente cadastrado com sucesso!')
-            return redirect('home')  # Redireciona para a página inicial
+        if 'excluir_cliente_id' in request.POST:
+            cliente_id = request.POST.get('excluir_cliente_id')
+            Cliente.objects.filter(id=cliente_id).delete()
+            messages.success(request, 'Cliente excluído com sucesso!')
+            return redirect('cadastrar_cliente')
+        elif 'editar_cliente_id' in request.POST:
+            cliente = get_object_or_404(Cliente, id=request.POST.get('editar_cliente_id'))
+            form = ClienteForm(request.POST, instance=cliente)
+            if form.is_valid():
+                form.save()
+                messages.success(request, 'Cliente atualizado com sucesso!')
+                return redirect('cadastrar_cliente')
+            else:
+                messages.error(request, 'Erro ao atualizar cliente.')
         else:
-            messages.error(request, 'Erro ao cadastrar cliente. Verifique os dados.')
+            # Cadastro normal
+            form = ClienteForm(request.POST)
+            if form.is_valid():
+                form.save()
+                messages.success(request, 'Cliente cadastrado com sucesso!')
+                return redirect('cadastrar_cliente')
+            else:
+                messages.error(request, 'Erro ao cadastrar cliente.')
     else:
-        form = ClienteForm()
-    return render(request, 'kq_app/cadastrar_cliente.html', {'form': form})
+        # Checa se estamos editando
+        editar_id = request.GET.get('editar')
+        if editar_id:
+            cliente = get_object_or_404(Cliente, id=editar_id)
+            form = ClienteForm(instance=cliente)
+        else:
+            form = ClienteForm()
+
+    busca = request.GET.get('busca', '')
+    clientes = Cliente.objects.filter(nome__icontains=busca).order_by('-data_cadastro')
+    paginator = Paginator(clientes, 5)  # 5 por página
+    pagina_numero = request.GET.get('pagina')
+    pagina_clientes = paginator.get_page(pagina_numero)
+
+    context = {
+        'form': form,
+        'clientes': pagina_clientes,
+        'busca': busca,
+        'editando': editar_id if request.method != 'POST' else None
+    }
+    return render(request, 'kq_app/cadastrar_cliente.html', context)
 
 
 def novo_pedido(request):
