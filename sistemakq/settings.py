@@ -19,8 +19,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'kq_app',  # seu app principal
-    'cloudinary',  # se estiver usando Cloudinary
+    'kq_app', 
+    'cloudinary', 
+    'cloudinary_storage'
 ]
 
 # Middleware
@@ -35,7 +36,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'kqapp.urls'  # substitua 'seuprojeto' pelo nome do seu projeto Django
+ROOT_URLCONF = 'kq_app.urls'  # substitua 'seuprojeto' pelo nome do seu projeto Django
 
 TEMPLATES = [
     {
@@ -53,7 +54,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'kqapp.wsgi.application' 
+WSGI_APPLICATION = 'kq_app.wsgi.application' 
 
 # Banco de Dados via Heroku PostgreSQL
 DATABASES = {
