@@ -15,7 +15,7 @@ from reportlab.lib import colors
 from reportlab.lib.units import inch
 from reportlab.lib.styles import getSampleStyleSheet
 from .utils import gerar_contrato_pdf, enviar_contrato_email
-from django.contrib import messages
+from django.db import transaction
 
 
 def home(request):
