@@ -35,7 +35,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'seuprojeto.urls'  # substitua 'seuprojeto' pelo nome do seu projeto Django
+ROOT_URLCONF = 'kqapp.urls'  # substitua 'seuprojeto' pelo nome do seu projeto Django
 
 TEMPLATES = [
     {
@@ -53,7 +53,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'seuprojeto.wsgi.application'  # substitua também aqui
+WSGI_APPLICATION = 'kqapp.wsgi.application' 
 
 # Banco de Dados via Heroku PostgreSQL
 DATABASES = {
