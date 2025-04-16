@@ -1,33 +1,17 @@
 import os
 from pathlib import Path
-import environ
-import cloudinary
-import cloudinary.uploader
-import cloudinary.api
-import dj_database_url
-
-# Inicializar environ
-env = environ.Env()
-environ.Env.read_env()
+import dj_database_url  
 
 # Caminho base do projeto
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Chave secreta
-SECRET_KEY = env('DJANGO_SECRET_KEY', default='django-insecure-k9l2@k3j4m5n6p7q8r9s0t1u2v3w4x5y6z7a8b9c0d1e2f3g4h!')
+# Segurança
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "sua-chave-para-desenvolvimento")
+DEBUG = False
 
-# Debug
-DEBUG = 'DEVELOPMENT' in os.environ
+ALLOWED_HOSTS = ['*']  # Ou use ['kqapp-xxxx.herokuapp.com'] para restringir
 
-# Hosts permitidos
-ALLOWED_HOSTS = [
-    'kqapp-3bd5ea180ee2.herokuapp.com',
-    'localhost',
-    '127.0.0.1',
-    '*',  # temporariamente para teste
-]
-
-# Aplicativos instalados
+# Aplicações instaladas
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -35,28 +19,24 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'kq_app',
-    'django_cryptography',
-    'storages',  # Adicionado para AWS S3
+    'kq_app',  # seu app principal
+    'cloudinary',  # se estiver usando Cloudinary
 ]
 
-# Middlewares
+# Middleware
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # para servir arquivos estáticos no Heroku
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 
-# Configurações de URL
-ROOT_URLCONF = 'sistemakq.urls'
+ROOT_URLCONF = 'seuprojeto.urls'  # substitua 'seuprojeto' pelo nome do seu projeto Django
 
-# Templates
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -73,9 +53,9 @@ TEMPLATES = [
     },
 ]
 
-# WSGI
-WSGI_APPLICATION = 'sistemakq.wsgi.application'
+WSGI_APPLICATION = 'seuprojeto.wsgi.application'  # substitua também aqui
 
+# Banco de Dados via Heroku PostgreSQL
 DATABASES = {
     'default': dj_database_url.config(
         default=os.environ.get('DATABASE_URL'),
@@ -84,20 +64,12 @@ DATABASES = {
     )
 }
 
-# Validação de senhas
+# Validação de senha
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
+    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
 # Internacionalização
@@ -107,63 +79,20 @@ USE_I18N = True
 USE_L10N = True
 USE_TZ = True
 
-# Static files (CSS, JavaScript, Images)
+# Arquivos estáticos e mídia
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-# Extra places for collectstatic to find static files.
-STATICFILES_DIRS = (
-    os.path.join(BASE_DIR, 'static'),
-)
-
-# Simplified static file serving.
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-
-# Media files
 MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'mediafiles')
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-# Configurações de segurança para produção
-if not DEBUG:
-    SECURE_SSL_REDIRECT = True
-    CSRF_COOKIE_SECURE = True
-    SESSION_COOKIE_SECURE = True
-    SECURE_BROWSER_XSS_FILTER = True
-    SECURE_CONTENT_TYPE_NOSNIFF = True
-    X_FRAME_OPTIONS = 'DENY'
-    SECURE_HSTS_SECONDS = 31536000  # 1 ano
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-    SECURE_HSTS_PRELOAD = True
-
-# Configuração para logs
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'console': {
-            'class': 'logging.StreamHandler',
-        },
-    },
-    'root': {
-        'handlers': ['console'],
-        'level': 'WARNING',
-    },
-}
-
-# Configuração para servir arquivos em produção
-if not DEBUG:
-    MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
-
-# Cloudinary settings
+# Cloudinary (se estiver usando)
 CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': 'seu-cloud-name',
+    'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME'),
+    'API_KEY': os.environ.get('CLOUDINARY_API_KEY'),
+    'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET'),
 }
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
-# Configuração do CSRF
-CSRF_TRUSTED_ORIGINS = [
-    'https://kqapp-3bd5ea180ee2.herokuapp.com',
-    'http://localhost:8000',
-]
-
-# Configuração de segurança para produção
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+# Configuração do Whitenoise
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
