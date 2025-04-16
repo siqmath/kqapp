@@ -4,6 +4,7 @@ import environ
 import cloudinary
 import cloudinary.uploader
 import cloudinary.api
+import dj_database_url
 
 # Inicializar environ
 env = environ.Env()
@@ -75,9 +76,12 @@ TEMPLATES = [
 # WSGI
 WSGI_APPLICATION = 'sistemakq.wsgi.application'
 
-# Banco de Dados
 DATABASES = {
-    'default': env.db('DATABASE_URL', default='sqlite:////' + str(BASE_DIR / 'db.sqlite3'))
+    'default': dj_database_url.config(
+        default=os.environ.get('DATABASE_URL'),
+        conn_max_age=600,
+        ssl_require=True
+    )
 }
 
 # Validação de senhas
