@@ -19,7 +19,7 @@
             text-align: center;
         }
         .container {
-            max-width: 600px;
+            max-width: 800px;
             margin: 20px auto;
             padding: 20px;
             background-color: white;
@@ -39,7 +39,7 @@
             padding: 10px;
             border: 1px solid #ccc;
             border-radius: 4px;
-            box-sizing: border-box; /* Garante que o padding não aumente a largura */
+            box-sizing: border-box;
         }
         .button {
             display: inline-block;
@@ -51,9 +51,8 @@
             border-radius: 5px;
             transition: background-color 0.3s;
             font-size: 16px;
-            text-align: center;
             margin: 5px 0;
-            cursor: pointer; /* Adiciona cursor de pointer */
+            cursor: pointer;
         }
         .button:hover {
             background-color: #2D2D4A;
@@ -78,6 +77,19 @@
             margin-bottom: 10px;
             color: #555;
         }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: center;
+        }
+        th {
+            background-color: #f0f0f0;
+        }
     </style>
 </head>
 <body>
@@ -87,12 +99,17 @@
 </header>
 
 <div class="container">
-    {% if success_message %}
-        <div class="success-message">{{ success_message }}</div>
+    {% if messages %}
+        {% for message in messages %}
+            <div class="success-message">{{ message }}</div>
+        {% endfor %}
     {% endif %}
 
     <form action="{% url 'cadastrar_cliente' %}" method="POST">
         {% csrf_token %}
+        {% if editando %}
+            <input type="hidden" name="editar_cliente_id" value="{{ editando }}">
+        {% endif %}
 
         <div class="form-section">
             <h2>Informações Pessoais</h2>
@@ -156,10 +173,70 @@
             </div>
         </div>
 
-        <button type="submit" class="button">Cadastrar</button>
+        {% if editando %}
+            <button type="submit" class="button" style="background-color: #2980b9;">Atualizar</button>
+            <a href="{% url 'cadastrar_cliente' %}" class="button" style="background-color: #95a5a6;">Cancelar</a>
+        {% else %}
+            <button type="submit" class="button">Cadastrar</button>
+        {% endif %}
         <a href="{% url 'home' %}" class="button" style="background-color: #e67e22;">Menu</a>
     </form>
-</div>
 
+    <hr>
+
+    <!-- Busca -->
+    <form method="GET" action="{% url 'cadastrar_cliente' %}" style="margin-bottom: 20px;">
+        <input type="text" name="busca" placeholder="Buscar por nome" value="{{ busca }}" style="width: 70%; padding: 10px;">
+        <button type="submit" class="button">Buscar</button>
+    </form>
+
+    <!-- Tabela de clientes -->
+    <h2>Clientes Cadastrados</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>Email</th>
+                <th>Telefone</th>
+                <th>Equipe</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for cliente in clientes %}
+            <tr>
+                <td>{{ cliente.nome }}</td>
+                <td>{{ cliente.email }}</td>
+                <td>{{ cliente.telefone }}</td>
+                <td>{{ cliente.equipe }}</td>
+                <td>
+                    <a href="?editar={{ cliente.id }}" class="button" style="background-color:#2980b9;">Editar</a>
+                    <form method="POST" style="display:inline;">
+                        {% csrf_token %}
+                        <input type="hidden" name="excluir_cliente_id" value="{{ cliente.id }}">
+                        <button type="submit" class="button" style="background-color:#e74c3c;">Excluir</button>
+                    </form>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5">Nenhum cliente encontrado.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Paginação -->
+    <div style="text-align: center; margin-top: 20px;">
+        {% if clientes.has_previous %}
+            <a href="?pagina={{ clientes.previous_page_number }}&busca={{ busca }}" class="button">Anterior</a>
+        {% endif %}
+
+        Página {{ clientes.number }} de {{ clientes.paginator.num_pages }}
+
+        {% if clientes.has_next %}
+            <a href="?pagina={{ clientes.next_page_number }}&busca={{ busca }}" class="button">Próxima</a>
+        {% endif %}
+    </div>
+
+</div>
 </body>
 </html>
