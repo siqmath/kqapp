@@ -2,7 +2,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 from django.forms import formset_factory
-from .models import Cliente, Pedido, OrdemDeServico, Produto, Custo, Pagamento
+from .models import Cliente, Pedido, OrdemDeServico, Produto, Custo, Pagamento, ContatoCliente, EtapaRelacionamento, NotaInterna
 import re
 
 class ClienteForm(forms.ModelForm):
@@ -91,3 +91,29 @@ class PagamentoForm(forms.ModelForm):
             'numero_parcelas': forms.NumberInput(attrs={'class': 'form-control'}),
             'data_vencimento': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
         }
+
+class ContatoClienteForm(forms.ModelForm):
+    class Meta:
+        model = ContatoCliente
+        fields = ['cliente', 'data_contato', 'tipo', 'descricao']
+        widgets = {
+            'data_contato': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+            'descricao': forms.Textarea(attrs={'rows': 3}),
+        }
+
+
+class EtapaRelacionamentoForm(forms.ModelForm):
+    class Meta:
+        model = EtapaRelacionamento
+        fields = ['cliente', 'etapa']
+
+
+class NotaInternaForm(forms.ModelForm):
+    class Meta:
+        model = NotaInterna
+        fields = ['cliente', 'autor', 'texto', 'data']
+        widgets = {
+            'data': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+            'texto': forms.Textarea(attrs={'rows': 3}),
+        }
+
