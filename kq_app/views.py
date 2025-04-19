@@ -17,8 +17,7 @@ from reportlab.lib.styles import getSampleStyleSheet
 from .utils import gerar_contrato_pdf, enviar_contrato_email
 from django.db import transaction
 from django.core.paginator import Paginator
-
-
+import logging
 
 def home(request):
     """Página inicial."""
@@ -64,6 +63,62 @@ def cadastrar_cliente(request):
         'editando': editando
     }
     return render(request, 'kq_app/cadastrar_cliente.html', context)
+
+def cliente_detalhes(request, cliente_id):
+    try:
+        cliente = get_object_or_404(Cliente, id=cliente_id)
+        contatos = ContatoCliente.objects.filter(cliente=cliente).order_by('-data_contato')
+        notas = NotaInterna.objects.filter(cliente=cliente).order_by('-data')
+
+        etapa_qs = EtapaRelacionamento.objects.filter(cliente=cliente)
+        if etapa_qs.count() > 1:
+            etapa_qs.exclude(id=etapa_qs.first().id).delete()
+        etapa, _ = EtapaRelacionamento.objects.get_or_create(cliente=cliente)
+
+        contato_form = ContatoClienteForm()
+        nota_form = NotaInternaForm()
+        etapa_form = EtapaRelacionamentoForm(instance=etapa)
+
+        if request.method == 'POST':
+            if 'add_contato' in request.POST:
+                contato_form = ContatoClienteForm(request.POST)
+                if contato_form.is_valid():
+                    contato = contato_form.save(commit=False)
+                    contato.cliente = cliente
+                    contato.save()
+                    messages.success(request, 'Contato registrado com sucesso.')
+                    return redirect('cliente_detalhes', cliente_id=cliente.id)
+
+            elif 'add_nota' in request.POST:
+                nota_form = NotaInternaForm(request.POST)
+                if nota_form.is_valid():
+                    nota = nota_form.save(commit=False)
+                    nota.cliente = cliente
+                    nota.save()
+                    messages.success(request, 'Nota adicionada com sucesso.')
+                    return redirect('cliente_detalhes', cliente_id=cliente.id)
+
+            elif 'update_etapa' in request.POST:
+                etapa_form = EtapaRelacionamentoForm(request.POST, instance=etapa)
+                if etapa_form.is_valid():
+                    etapa_form.save()
+                    messages.success(request, 'Etapa de relacionamento atualizada.')
+                    return redirect('cliente_detalhes', cliente_id=cliente.id)
+
+        context = {
+            'cliente': cliente,
+            'contatos': contatos,
+            'notas': notas,
+            'etapa': etapa,
+            'contato_form': contato_form,
+            'nota_form': nota_form,
+            'etapa_form': etapa_form,
+        }
+        return render(request, 'kq_app/cliente_detalhes.html', context)
+
+    except Exception as e:
+        logging.error(f"Erro na view cliente_detalhes para cliente_id={cliente_id}: {e}", exc_info=True)
+        return HttpResponse(f"Erro interno ao carregar cliente {cliente_id}: {e}", status=500)
 
 def cliente_detalhes(request, cliente_id):
     try:
