@@ -15,6 +15,7 @@ from reportlab.lib import colors
 from reportlab.lib.units import inch
 from reportlab.lib.styles import getSampleStyleSheet
 from .utils import gerar_contrato_pdf, enviar_contrato_email
+from django.utils.html import format_html
 from django.db import transaction
 from django.core.paginator import Paginator
 import logging
@@ -519,3 +520,105 @@ def atualizar_etapa_relacionamento(request, cliente_id):
             form.save()
             messages.success(request, 'Etapa de relacionamento atualizada.')
     return redirect('cliente_detalhes', cliente_id=cliente.id)
+
+def resumo_financeiro(request):
+    pedidos = Pedido.objects.prefetch_related('ordens_de_servico').select_related('cliente')
+
+    linhas_faturamento = []
+    linhas_resultado = []
+    linhas_custos = []
+
+    for pedido in pedidos:
+        ordens = pedido.ordens_de_servico.all()
+        subtotal = 0
+        custo_total = 0
+
+        for os in ordens:
+            quantidade = os.quantidade
+            total = os.preco_unitario * quantidade
+            subtotal += total
+
+            custos_os = Custo.objects.filter(ordem_de_servico=os)
+            for custo in custos_os:
+                custo_total += custo.valor
+
+            # Faturamento (tabela 1)
+            linhas_faturamento.append(f"""
+                <tr>
+                    <td>{pedido.id}</td>
+                    <td>{pedido.cliente.nome}</td>
+                    <td>{os.produto.nome}</td>
+                    <td>{pedido.data_entrega.strftime('%d/%m/%Y') if pedido.data_entrega else 'Não definida'}</td>
+                    <td>{quantidade}</td>
+                    <td>R$ {os.preco_unitario:.2f}</td>
+                    <td>R$ {total:.2f}</td>
+                </tr>
+            """)
+
+        # Custos (tabela 2)
+        custos_pedido = Custo.objects.filter(ordem_de_servico__pedido=pedido)
+        for custo in custos_pedido:
+            linhas_custos.append(f"""
+                <tr>
+                    <td>{pedido.id}</td>
+                    <td>{pedido.cliente.nome}</td>
+                    <td>{custo.ordem_de_servico.produto.nome}</td>
+                    <td>{custo.tipo or 'Outro'}</td>
+                    <td>R$ {custo.valor:.2f}</td>
+                    <td>{custo.data.strftime('%d/%m/%Y')}</td>
+                </tr>
+            """)
+
+        # Resultado (tabela 3)
+        linhas_resultado.append(f"""
+            <tr>
+                <td>{pedido.id}</td>
+                <td>{pedido.cliente.nome}</td>
+                <td>{', '.join([os.produto.nome for os in ordens])}</td>
+                <td>{pedido.data_entrega.strftime('%d/%m/%Y') if pedido.data_entrega else 'Não definida'}</td>
+                <td>R$ {subtotal:.2f}</td>
+                <td>R$ {custo_total:.2f}</td>
+                <td>R$ {(subtotal - custo_total):.2f}</td>
+            </tr>
+        """)
+
+    tabela_faturamento = format_html("""
+        <table>
+            <thead>
+                <tr>
+                    <th>Pedido</th><th>Cliente</th><th>Produto</th><th>Data Entrega</th><th>Quantidade</th><th>Valor Unitário</th><th>Valor Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {} 
+            </tbody>
+        </table>
+    """, format_html("".join(linhas_faturamento)))
+
+    tabela_custos = format_html("""
+        <table>
+            <thead>
+                <tr><th>Pedido</th><th>Cliente</th><th>Produto</th><th>Tipo de Custo</th><th>Valor</th><th>Data</th></tr>
+            </thead>
+            <tbody>
+                {} 
+            </tbody>
+        </table>
+    """, format_html("".join(linhas_custos)))
+
+    tabela_resultado = format_html("""
+        <table>
+            <thead>
+                <tr><th>Pedido</th><th>Cliente</th><th>Produto</th><th>Entrega</th><th>Valor Total</th><th>Custos</th><th>Lucro</th></tr>
+            </thead>
+            <tbody>
+                {} 
+            </tbody>
+        </table>
+    """, format_html("".join(linhas_resultado)))
+
+    return render(request, 'kq_app/resumo_financeiro.html', {
+        'tabela_faturamento': tabela_faturamento,
+        'tabela_custos': tabela_custos,
+        'tabela_resultado': tabela_resultado,
+    })
