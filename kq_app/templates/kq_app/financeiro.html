@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Resumo Financeiro - Sistema KQ</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0; }
+        header { background-color: #3D3D6A; color: white; padding: 20px; text-align: center; }
+        .container { max-width: 1200px; margin: 20px auto; padding: 20px; background: white; border-radius: 8px; }
+        h2 { color: #3D3D6A; }
+        .button-group { text-align: center; margin-bottom: 20px; }
+        .button-group button {
+            padding: 10px 20px;
+            margin: 0 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            background-color: #cce0ff; /* Azul claro padrão */
+            color: #333;
+            font-weight: bold;
+        }
+        .button-group button.active {
+            background-color: #3D3D6A; /* Azul padrão */
+            color: white;
+        }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: center;
+        }
+        th { background-color: #f0f0f0; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+<header>
+    <h1>Resumo Financeiro</h1>
+</header>
+<div class="container">
+    <div class="button-group">
+        <button id="btnFaturamento" class="active" onclick="mostrarTabela('faturamento')">Faturamento</button>
+        <button id="btnCustos" onclick="mostrarTabela('custos')">Custos</button>
+        <button id="btnResultado" onclick="mostrarTabela('resultado')">Resultado</button>
+    </div>
+
+    <!-- Tabela de Faturamento -->
+    <table id="tabelaFaturamento">
+        <thead>
+            <tr>
+                <th>Pedido</th><th>Cliente</th><th>Produto</th><th>Data Entrega</th><th>Quantidade</th><th>Valor Unitário</th><th>Valor Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for pedido in pedidos %}
+                {% for os in pedido.ordens_de_servico.all %}
+                <tr>
+                    <td>{{ pedido.id }}</td>
+                    <td>{{ pedido.cliente.nome }}</td>
+                    <td>{{ os.produto.nome }}</td>
+                    <td>{{ pedido.data_entrega|date:"d/m/Y" }}</td>
+                    <td>{{ os.quantidade }}</td>
+                    <td>R$ {{ os.preco_unitario }}</td>
+                    <td>R$ {{ os.preco_unitario|floatformat:2|add:os.quantidade|floatformat:2 }}</td>
+                </tr>
+                {% endfor %}
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Tabela de Custos -->
+    <table id="tabelaCustos" class="hidden">
+        <thead>
+            <tr>
+                <th>Pedido</th><th>Cliente</th><th>Produto</th><th>Item</th><th>Valor</th><th>Pago?</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for pedido in pedidos %}
+                {% for os in pedido.ordens_de_servico.all %}
+                    {% for item in os.itens_custo.all %}
+                    <tr>
+                        <td>{{ pedido.id }}</td>
+                        <td>{{ pedido.cliente.nome }}</td>
+                        <td>{{ os.produto.nome }}</td>
+                        <td>{{ item.tipo }}</td>
+                        <td>R$ {{ item.valor }}</td>
+                        <td>{{ item.pago|yesno:"✔,✗" }}</td>
+                    </tr>
+                    {% endfor %}
+                {% endfor %}
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Tabela de Resultado -->
+    <table id="tabelaResultado" class="hidden">
+        <thead>
+            <tr>
+                <th>Pedido</th><th>Cliente</th><th>Produto</th><th>Entrega</th><th>Valor Total</th><th>Total Custos</th><th>Lucro</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for pedido in pedidos %}
+                {% for os in pedido.ordens_de_servico.all %}
+                    <tr>
+                        <td>{{ pedido.id }}</td>
+                        <td>{{ pedido.cliente.nome }}</td>
+                        <td>{{ os.produto.nome }}</td>
+                        <td>{{ pedido.data_entrega|date:"d/m/Y" }}</td>
+                        <td>R$ {{ os.preco_unitario|floatformat:2|add:os.quantidade|floatformat:2 }}</td>
+                        <td>R$ {{ os.total_custos }}</td>
+                        <td>R$ {{ os.lucro }}</td>
+                    </tr>
+                {% endfor %}
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script>
+    function mostrarTabela(nome) {
+        const tabelas = ['faturamento', 'custos', 'resultado'];
+        tabelas.forEach(t => {
+            document.getElementById('tabela' + t.charAt(0).toUpperCase() + t.slice(1)).classList.add('hidden');
+            document.getElementById('btn' + t.charAt(0).toUpperCase() + t.slice(1)).classList.remove('active');
+        });
+        document.getElementById('tabela' + nome.charAt(0).toUpperCase() + nome.slice(1)).classList.remove('hidden');
+        document.getElementById('btn' + nome.charAt(0).toUpperCase() + nome.slice(1)).classList.add('active');
+    }
+</script>
+
+</body>
+</html>
