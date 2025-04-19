@@ -33,20 +33,36 @@ def cadastrar_cliente(request):
     form = ClienteForm()
     editando = None
 
-   elif 'excluir_cliente_id' in request.POST:
-    cliente = get_object_or_404(Cliente, id=request.POST['excluir_cliente_id'])
-    try:
-        # Excluir registros relacionados
-        NotaInterna.objects.filter(cliente=cliente).delete()
-        ContatoCliente.objects.filter(cliente=cliente).delete()
-        EtapaRelacionamento.objects.filter(cliente=cliente).delete()
-        Pedido.objects.filter(cliente=cliente).delete()
+    if request.method == 'POST':
+        # Edição de cliente existente
+        if 'editar_cliente_id' in request.POST:
+            cliente = get_object_or_404(Cliente, id=request.POST['editar_cliente_id'])
+            form = ClienteForm(request.POST, instance=cliente)
+            editando = cliente.id
 
-        cliente.delete()
-        messages.success(request, 'Cliente e todos os dados relacionados excluídos com sucesso.')
-    except Exception as e:
-        messages.error(request, f'Erro ao excluir cliente: {e}')
-    return redirect('cadastrar_cliente')
+        # Exclusão de cliente e dados relacionados
+        elif 'excluir_cliente_id' in request.POST:
+            cliente = get_object_or_404(Cliente, id=request.POST['excluir_cliente_id'])
+            try:
+                with transaction.atomic():
+                    NotaInterna.objects.filter(cliente=cliente).delete()
+                    ContatoCliente.objects.filter(cliente=cliente).delete()
+                    EtapaRelacionamento.objects.filter(cliente=cliente).delete()
+
+                    pedidos = Pedido.objects.filter(cliente=cliente)
+                    for pedido in pedidos:
+                        OrdemDeServico.objects.filter(pedido=pedido).delete()
+                        Pagamento.objects.filter(pedido=pedido).delete()
+                        pedido.delete()
+
+                    cliente.delete()
+
+                messages.success(request, 'Cliente e todos os dados relacionados excluídos com sucesso.')
+            except Exception as e:
+                messages.error(request, f'Erro ao excluir cliente: {e}')
+            return redirect('cadastrar_cliente')
+
+        # Cadastro de novo cliente
         else:
             form = ClienteForm(request.POST)
 
@@ -64,7 +80,7 @@ def cadastrar_cliente(request):
         'form': form,
         'clientes': clientes,
         'busca': busca,
-        'editando': editando
+        'editando': editando,
     }
     return render(request, 'kq_app/cadastrar_cliente.html', context)
 
