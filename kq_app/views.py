@@ -445,11 +445,37 @@ def cliente_detalhes(request, cliente_id):
     cliente = get_object_or_404(Cliente, id=cliente_id)
     contatos = ContatoCliente.objects.filter(cliente=cliente).order_by('-data_contato')
     notas = NotaInterna.objects.filter(cliente=cliente).order_by('-data')
-    etapa = EtapaRelacionamento.objects.filter(cliente=cliente).first()
+    etapa, _ = EtapaRelacionamento.objects.get_or_create(cliente=cliente)
 
     contato_form = ContatoClienteForm()
     nota_form = NotaInternaForm()
-    etapa_form = EtapaRelacionamentoForm(instance=etapa) if etapa else EtapaRelacionamentoForm()
+    etapa_form = EtapaRelacionamentoForm(instance=etapa)
+
+    if request.method == 'POST':
+        if 'add_contato' in request.POST:
+            contato_form = ContatoClienteForm(request.POST)
+            if contato_form.is_valid():
+                contato = contato_form.save(commit=False)
+                contato.cliente = cliente
+                contato.save()
+                messages.success(request, 'Contato registrado com sucesso.')
+                return redirect('cliente_detalhes', cliente_id=cliente.id)
+
+        elif 'add_nota' in request.POST:
+            nota_form = NotaInternaForm(request.POST)
+            if nota_form.is_valid():
+                nota = nota_form.save(commit=False)
+                nota.cliente = cliente
+                nota.save()
+                messages.success(request, 'Nota adicionada com sucesso.')
+                return redirect('cliente_detalhes', cliente_id=cliente.id)
+
+        elif 'update_etapa' in request.POST:
+            etapa_form = EtapaRelacionamentoForm(request.POST, instance=etapa)
+            if etapa_form.is_valid():
+                etapa_form.save()
+                messages.success(request, 'Etapa de relacionamento atualizada.')
+                return redirect('cliente_detalhes', cliente_id=cliente.id)
 
     context = {
         'cliente': cliente,
