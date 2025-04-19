@@ -214,3 +214,19 @@ class Pagamento(models.Model):
 
     def __str__(self):
         return f"Pagamento de {self.valor_pago} em {self.data_pagamento}"
+
+class ContatoCliente(models.Model):
+    cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE)
+    data_contato = models.DateTimeField(default=timezone.now)
+    tipo = models.CharField(max_length=50, choices=[('whatsapp', 'WhatsApp'), ('email', 'Email'), ('reunião', 'Reunião'), ('outro', 'Outro')])
+    descricao = models.TextField()
+
+class EtapaRelacionamento(models.Model):
+    cliente = models.OneToOneField(Cliente, on_delete=models.CASCADE)
+    etapa = models.CharField(max_length=50, choices=[('prospecção', 'Prospecção'), ('orçamento', 'Orçamento'), ('negociação', 'Negociação'), ('pedido', 'Pedido Realizado')], default='prospecção')
+
+class NotaInterna(models.Model):
+    cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE)
+    autor = models.CharField(max_length=100)
+    texto = models.TextField()
+    data = models.DateTimeField(default=timezone.now)
