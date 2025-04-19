@@ -95,25 +95,44 @@ class PagamentoForm(forms.ModelForm):
 class ContatoClienteForm(forms.ModelForm):
     class Meta:
         model = ContatoCliente
-        fields = ['cliente', 'data_contato', 'tipo', 'descricao']
-        widgets = {
-            'data_contato': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
-            'descricao': forms.Textarea(attrs={'rows': 3}),
+        fields = ['data_contato', 'tipo', 'descricao']
+        labels = {
+            'data_contato': 'Data do Contato',
+            'tipo': 'Tipo de Contato',
+            'descricao': 'Descrição do Contato',
         }
-
+        widgets = {
+            'data_contato': forms.DateTimeInput(
+                attrs={'type': 'datetime-local', 'class': 'form-control'}
+            ),
+            'tipo': forms.Select(attrs={'class': 'form-control'}),
+            'descricao': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
+        }
 
 class EtapaRelacionamentoForm(forms.ModelForm):
     class Meta:
         model = EtapaRelacionamento
-        fields = ['cliente', 'etapa']
+        fields = ['etapa']
+        labels = {
+            'etapa': 'Fase do Relacionamento com o Cliente',
+        }
+        widgets = {
+            'etapa': forms.Select(attrs={'class': 'form-control'}),
+        }
 
 
 class NotaInternaForm(forms.ModelForm):
     class Meta:
         model = NotaInterna
-        fields = ['cliente', 'autor', 'texto', 'data']
+        fields = ['autor', 'texto', 'data']
+        labels = {
+            'autor': 'Nome do Autor',
+            'texto': 'Texto da Nota Interna',
+            'data': 'Data da Nota',
+        }
         widgets = {
-            'data': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
-            'texto': forms.Textarea(attrs={'rows': 3}),
+            'autor': forms.TextInput(attrs={'class': 'form-control'}),
+            'texto': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
+            'data': forms.DateTimeInput(attrs={'type': 'datetime-local', 'class': 'form-control'}),
         }
 
