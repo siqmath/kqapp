@@ -193,36 +193,37 @@
     <!-- Tabela de clientes -->
     <h2>Clientes Cadastrados</h2>
     <table>
-        <thead>
-            <tr>
-                <th>Nome</th>
-                <th>Email</th>
-                <th>Telefone</th>
-                <th>Equipe</th>
-                <th>Ações</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for cliente in clientes %}
-            <tr>
-                <td>{{ cliente.nome }}</td>
-                <td>{{ cliente.email }}</td>
-                <td>{{ cliente.telefone }}</td>
-                <td>{{ cliente.equipe }}</td>
-                <td>
-                    <a href="?editar={{ cliente.id }}" class="button" style="background-color:#2980b9;">Editar</a>
-                    <form method="POST" style="display:inline;">
-                        {% csrf_token %}
-                        <input type="hidden" name="excluir_cliente_id" value="{{ cliente.id }}">
-                        <button type="submit" class="button" style="background-color:#e74c3c;">Excluir</button>
-                    </form>
-                </td>
-            </tr>
-            {% empty %}
-            <tr><td colspan="5">Nenhum cliente encontrado.</td></tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <thead>
+        <tr>
+            <th>Nome</th>
+            <th>Email</th>
+            <th>Telefone</th>
+            <th>Equipe</th>
+            <th>Ações</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for cliente in clientes %}
+        <tr>
+            <td>{{ cliente.nome }}</td>
+            <td>{{ cliente.email }}</td>
+            <td>{{ cliente.telefone }}</td>
+            <td>{{ cliente.equipe }}</td>
+            <td style="white-space: nowrap;">
+                <a href="?editar={{ cliente.id }}" class="button" style="background-color:#2980b9;">Editar</a>
+                <form method="POST" style="display:inline;">
+                    {% csrf_token %}
+                    <input type="hidden" name="excluir_cliente_id" value="{{ cliente.id }}">
+                    <button type="submit" class="button" style="background-color:#e74c3c;">Excluir</button>
+                </form>
+                <a href="{% url 'cliente_detalhes' cliente.id %}" class="button" style="background-color:#8e44ad;">Detalhes</a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5">Nenhum cliente encontrado.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
 
     <!-- Paginação -->
     <div style="text-align: center; margin-top: 20px;">
