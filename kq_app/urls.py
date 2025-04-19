@@ -19,5 +19,6 @@ urlpatterns = [
     path('folha_corte_costura/<int:os_id>/', views.gerar_folha_corte_costura, name='gerar_folha_corte_costura'),
     path('gerar_contrato/<int:pedido_id>/', views.gerar_contrato_pedido, name='gerar_contrato_pedido'),
     path('excluir_pedido/<int:pedido_id>/', views.excluir_pedido, name='excluir_pedido'),
+    path('clientes/<int:cliente_id>/', views.cliente_detalhes, name='cliente_detalhes'),
 
 ]
