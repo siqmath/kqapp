@@ -111,13 +111,14 @@
 </header>
 
 <div class="container">
-    <a href="{% url 'cadastrar_cliente' %}" class="button">Cadastrar Cliente</a>
-
-    <form action="" method="GET">
-        <div class="form-group">
+    <form action="" method="GET" style="display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap;">
+        <div class="form-group" style="flex: 1;">
             <label for="busca_cliente">Buscar cliente por nome:</label>
             <input type="text" name="busca" id="busca_cliente" placeholder="Digite o nome do cliente..." value="{{ request.GET.busca }}">
+        </div>
+        <div class="form-group">
             <button type="submit" class="button">Buscar</button>
+            <a href="{% url 'cadastrar_cliente' %}" class="button">Cadastrar Cliente</a>
         </div>
     </form>
 
