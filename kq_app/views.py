@@ -40,8 +40,11 @@ def cadastrar_cliente(request):
             editando = cliente.id
         elif 'excluir_cliente_id' in request.POST:
             cliente = get_object_or_404(Cliente, id=request.POST['excluir_cliente_id'])
-            cliente.delete()
-            messages.success(request, 'Cliente excluído com sucesso.')
+            try:
+                cliente.delete()
+                messages.success(request, 'Cliente excluído com sucesso.')
+            except ProtectedError:
+                messages.error(request, 'Erro: Cliente possui dados relacionados que impedem a exclusão.')
             return redirect('cadastrar_cliente')
         else:
             form = ClienteForm(request.POST)
@@ -120,90 +123,6 @@ def cliente_detalhes(request, cliente_id):
         logging.error(f"Erro na view cliente_detalhes para cliente_id={cliente_id}: {e}", exc_info=True)
         return HttpResponse(f"Erro interno ao carregar cliente {cliente_id}: {e}", status=500)
 
-def cliente_detalhes(request, cliente_id):
-    try:
-        cliente = get_object_or_404(Cliente, id=cliente_id)
-        contatos = ContatoCliente.objects.filter(cliente=cliente).order_by('-data_contato')
-        notas = NotaInterna.objects.filter(cliente=cliente).order_by('-data')
-
-        etapa_qs = EtapaRelacionamento.objects.filter(cliente=cliente)
-        if etapa_qs.count() > 1:
-            etapa_qs.exclude(id=etapa_qs.first().id).delete()
-        etapa, _ = EtapaRelacionamento.objects.get_or_create(cliente=cliente)
-
-        contato_form = ContatoClienteForm()
-        nota_form = NotaInternaForm()
-        etapa_form = EtapaRelacionamentoForm(instance=etapa)
-
-        if request.method == 'POST':
-            if 'add_contato' in request.POST:
-                contato_form = ContatoClienteForm(request.POST)
-                if contato_form.is_valid():
-                    contato = contato_form.save(commit=False)
-                    contato.cliente = cliente
-                    contato.save()
-                    messages.success(request, 'Contato registrado com sucesso.')
-                    return redirect('cliente_detalhes', cliente_id=cliente.id)
-
-            elif 'add_nota' in request.POST:
-                nota_form = NotaInternaForm(request.POST)
-                if nota_form.is_valid():
-                    nota = nota_form.save(commit=False)
-                    nota.cliente = cliente
-                    nota.save()
-                    messages.success(request, 'Nota adicionada com sucesso.')
-                    return redirect('cliente_detalhes', cliente_id=cliente.id)
-
-            elif 'update_etapa' in request.POST:
-                etapa_form = EtapaRelacionamentoForm(request.POST, instance=etapa)
-                if etapa_form.is_valid():
-                    etapa_form.save()
-                    messages.success(request, 'Etapa de relacionamento atualizada.')
-                    return redirect('cliente_detalhes', cliente_id=cliente.id)
-
-        context = {
-            'cliente': cliente,
-            'contatos': contatos,
-            'notas': notas,
-            'etapa': etapa,
-            'contato_form': contato_form,
-            'nota_form': nota_form,
-            'etapa_form': etapa_form,
-        }
-        return render(request, 'kq_app/cliente_detalhes.html', context)
-
-    except Exception as e:
-        logging.error(f"Erro na view cliente_detalhes para cliente_id={cliente_id}: {e}", exc_info=True)
-        return HttpResponse(f"Erro interno ao carregar cliente {cliente_id}: {e}", status=500)
-
-def cliente_detalhes(request, cliente_id):
-    try:
-        cliente = get_object_or_404(Cliente, id=cliente_id)
-        contatos = ContatoCliente.objects.filter(cliente=cliente).order_by('-data_contato')
-        notas = NotaInterna.objects.filter(cliente=cliente).order_by('-data')
-        etapa, _ = EtapaRelacionamento.objects.get_or_create(cliente=cliente)
-
-        contato_form = ContatoClienteForm()
-        nota_form = NotaInternaForm()
-        etapa_form = EtapaRelacionamentoForm(instance=etapa)
-
-        context = {
-            'cliente': cliente,
-            'contatos': contatos,
-            'notas': notas,
-            'etapa': etapa,
-            'contato_form': contato_form,
-            'nota_form': nota_form,
-            'etapa_form': etapa_form,
-        }
-        return render(request, 'kq_app/cliente_detalhes.html', context)
-    
-    except Exception as e:
-        import logging
-        logging.error(f"Erro na view cliente_detalhes para cliente_id={cliente_id}: {e}", exc_info=True)
-        return HttpResponse(f"Erro interno ao carregar cliente {cliente_id}: {e}", status=500)
-
-
 def novo_pedido(request):
     produtos = Produto.objects.all()
     busca = request.GET.get('busca', '')
@@ -273,30 +192,26 @@ def novo_pedido(request):
     }
     return render(request, 'kq_app/novo_pedido.html', context)
 
-
 def detalhes_pedido(request, pedido_id):
-    """Mostra os detalhes de um pedido, incluindo ordens de serviço, pagamentos,
-    total pago e saldo restante. Utiliza a agregação do Django para calcular o total pago.
-    """
-    pedido = get_object_or_404(Pedido, id=pedido_id)
-    ordens_de_servico = OrdemDeServico.objects.filter(pedido=pedido)
+    try:
+        pedido = get_object_or_404(Pedido, id=pedido_id)
+        ordens_de_servico = pedido.ordens_de_servico.all()
+        pagamentos = Pagamento.objects.filter(pedido=pedido)
+        total_pago = pagamentos.aggregate(total=models.Sum('valor_pago'))['total'] or 0
+        saldo_restante = pedido.valor_total - total_pago
 
-    # Utiliza a função de agregação Sum do Django para calcular o total pago
-    pagamentos = Pagamento.objects.filter(pedido=pedido)
-    total_pago = pagamentos.aggregate(total=Sum('valor_pago'))['total'] or 0
+        context = {
+            'pedido': pedido,
+            'ordens_de_servico': ordens_de_servico,
+            'pagamentos': pagamentos,
+            'total_pago': total_pago,
+            'saldo_restante': saldo_restante,
+        }
+        return render(request, 'kq_app/detalhes_pedido.html', context)
 
-    # Calcula o saldo restante
-    saldo_restante = pedido.valor_total - total_pago
-
-    context = {
-        'pedido': pedido,
-        'ordens_de_servico': ordens_de_servico,
-        'pagamentos': pagamentos,
-        'total_pago': total_pago,
-        'saldo_restante': saldo_restante,
-    }
-    return render(request, 'kq_app/detalhes_pedido.html', context)
-
+    except Exception as e:
+        logging.error(f"Erro ao carregar detalhes do pedido {pedido_id}: {e}", exc_info=True)
+        return HttpResponse(f"Erro interno ao carregar pedido {pedido_id}: {e}", status=500)
 
 def visualizar_producao(request):
     """Visualiza a produção (lista de pedidos)."""
@@ -541,80 +456,20 @@ def gerar_contrato_pedido(request, pedido_id):
     return response
 
 def excluir_pedido(request, pedido_id):
-    """
-    Exclui um pedido e todas as suas dependências (ordens de serviço e pagamentos)
-    de forma transacional. Isso garante que, se a exclusão de qualquer dependência falhar,
-    todo o processo seja revertido, mantendo a integridade dos dados.
-    """
     pedido = get_object_or_404(Pedido, id=pedido_id)
 
     try:
         with transaction.atomic():
-            # Exclui todas as ordens de serviço associadas ao pedido
             OrdemDeServico.objects.filter(pedido=pedido).delete()
-
-            # Exclui todos os pagamentos associados ao pedido
             Pagamento.objects.filter(pedido=pedido).delete()
-
-            # Finalmente, exclui o pedido
             pedido.delete()
-
-        messages.success(request, 'Pedido e todos os seus detalhes (ordens de serviço e pagamentos) excluídos com sucesso!')
-
+            messages.success(request, 'Pedido e seus dados relacionados foram excluídos com sucesso.')
     except Exception as e:
-        messages.error(request, f'Erro ao excluir pedido: {e}. Consulte os logs para mais detalhes.')
-        # Aqui, você pode adicionar logging para registrar o erro detalhadamente
-        # import logging
-        # logging.error(f"Erro ao excluir pedido {pedido_id}: {e}", exc_info=True)
+        logging.error(f"Erro ao excluir pedido {pedido_id}: {e}", exc_info=True)
+        messages.error(request, f'Erro ao excluir pedido: {str(e)}')
 
     return redirect('visualizar_producao')
 
-def cliente_detalhes(request, cliente_id):
-    cliente = get_object_or_404(Cliente, id=cliente_id)
-    contatos = ContatoCliente.objects.filter(cliente=cliente).order_by('-data_contato')
-    notas = NotaInterna.objects.filter(cliente=cliente).order_by('-data')
-    etapa, _ = EtapaRelacionamento.objects.get_or_create(cliente=cliente)
-
-    contato_form = ContatoClienteForm()
-    nota_form = NotaInternaForm()
-    etapa_form = EtapaRelacionamentoForm(instance=etapa)
-
-    if request.method == 'POST':
-        if 'add_contato' in request.POST:
-            contato_form = ContatoClienteForm(request.POST)
-            if contato_form.is_valid():
-                contato = contato_form.save(commit=False)
-                contato.cliente = cliente
-                contato.save()
-                messages.success(request, 'Contato registrado com sucesso.')
-                return redirect('cliente_detalhes', cliente_id=cliente.id)
-
-        elif 'add_nota' in request.POST:
-            nota_form = NotaInternaForm(request.POST)
-            if nota_form.is_valid():
-                nota = nota_form.save(commit=False)
-                nota.cliente = cliente
-                nota.save()
-                messages.success(request, 'Nota adicionada com sucesso.')
-                return redirect('cliente_detalhes', cliente_id=cliente.id)
-
-        elif 'update_etapa' in request.POST:
-            etapa_form = EtapaRelacionamentoForm(request.POST, instance=etapa)
-            if etapa_form.is_valid():
-                etapa_form.save()
-                messages.success(request, 'Etapa de relacionamento atualizada.')
-                return redirect('cliente_detalhes', cliente_id=cliente.id)
-
-    context = {
-        'cliente': cliente,
-        'contatos': contatos,
-        'notas': notas,
-        'etapa': etapa,
-        'contato_form': contato_form,
-        'nota_form': nota_form,
-        'etapa_form': etapa_form,
-    }
-    return render(request, 'kq_app/cliente_detalhes.html', context)
 
 def adicionar_contato_cliente(request, cliente_id):
     cliente = get_object_or_404(Cliente, id=cliente_id)
