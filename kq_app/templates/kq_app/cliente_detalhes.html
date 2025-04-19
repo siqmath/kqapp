@@ -5,74 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Detalhes do Cliente - Sistema KQ</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            color: #333;
-            margin: 0;
-            padding: 0;
-        }
-        header {
-            background-color: #3D3D6A;
-            color: white;
-            padding: 20px;
-            text-align: center;
-        }
-        .container {
-            max-width: 900px;
-            margin: 20px auto;
-            padding: 20px;
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-        .section {
-            margin-bottom: 30px;
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-        }
+        body { font-family: Arial, sans-serif; background-color: #f4f4f4; color: #333; margin: 0; padding: 0; }
+        header { background-color: #3D3D6A; color: white; padding: 20px; text-align: center; }
+        .container { max-width: 900px; margin: 20px auto; padding: 20px; background-color: white; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); }
+        h2, h3 { color: #3D3D6A; margin-top: 0; }
+        .section { margin-bottom: 30px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; }
         .form-group input,
         .form-group textarea,
-        .form-group select {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            box-sizing: border-box;
-        }
-        .button {
-            background-color: #3D3D6A;
-            color: white;
-            padding: 10px 15px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        .button:hover {
-            background-color: #2D2D4A;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-        }
-        th, td {
-            border: 1px solid #ccc;
-            padding: 10px;
-            text-align: left;
-        }
-        th {
-            background-color: #f0f0f0;
-        }
-        h2 {
-            color: #3D3D6A;
-            margin-top: 0;
-        }
+        .form-group select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        .button { background-color: #3D3D6A; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; }
+        .button:hover { background-color: #2D2D4A; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid #ccc; padding: 10px; text-align: left; }
+        th { background-color: #f0f0f0; }
+        .form-inline { display: flex; gap: 10px; flex-wrap: wrap; }
+        .form-inline .form-group { flex: 1; }
+        .error-message { color: red; margin-bottom: 10px; }
     </style>
 </head>
 <body>
@@ -92,10 +42,13 @@
 
     <div class="section">
         <h2>Etapa do Relacionamento</h2>
-        <form method="POST">
+        <form method="POST" class="form-inline">
             {% csrf_token %}
-            {{ etapa_form.as_p }}
-            <button type="submit" name="update_etapa" class="button">Atualizar Etapa</button>
+            <div class="form-group">
+                {{ etapa_form.etapa.label_tag }}
+                {{ etapa_form.etapa }}
+            </div>
+            <button type="submit" name="update_etapa" class="button">Atualizar</button>
         </form>
     </div>
 
@@ -104,13 +57,12 @@
         <form method="POST">
             {% csrf_token %}
             {{ contato_form.as_p }}
-            <button type="submit" name="add_contato" class="button">Registrar Contato</button>
+            <button type="submit" name="add_contato" class="button">Registrar</button>
         </form>
+
         <h3>Histórico de Contatos</h3>
         <table>
-            <thead>
-                <tr><th>Data</th><th>Tipo</th><th>Descrição</th></tr>
-            </thead>
+            <thead><tr><th>Data</th><th>Tipo</th><th>Descrição</th></tr></thead>
             <tbody>
                 {% for contato in contatos %}
                 <tr>
@@ -132,11 +84,10 @@
             {{ nota_form.as_p }}
             <button type="submit" name="add_nota" class="button">Salvar Nota</button>
         </form>
+
         <h3>Histórico de Notas</h3>
         <table>
-            <thead>
-                <tr><th>Data</th><th>Autor</th><th>Texto</th></tr>
-            </thead>
+            <thead><tr><th>Data</th><th>Autor</th><th>Texto</th></tr></thead>
             <tbody>
                 {% for nota in notas %}
                 <tr>
@@ -155,3 +106,4 @@
 </div>
 </body>
 </html>
+
