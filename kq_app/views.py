@@ -33,19 +33,20 @@ def cadastrar_cliente(request):
     form = ClienteForm()
     editando = None
 
-    if request.method == 'POST':
-        if 'editar_cliente_id' in request.POST:
-            cliente = get_object_or_404(Cliente, id=request.POST['editar_cliente_id'])
-            form = ClienteForm(request.POST, instance=cliente)
-            editando = cliente.id
-        elif 'excluir_cliente_id' in request.POST:
-            cliente = get_object_or_404(Cliente, id=request.POST['excluir_cliente_id'])
-            try:
-                cliente.delete()
-                messages.success(request, 'Cliente excluído com sucesso.')
-            except ProtectedError:
-                messages.error(request, 'Erro: Cliente possui dados relacionados que impedem a exclusão.')
-            return redirect('cadastrar_cliente')
+   elif 'excluir_cliente_id' in request.POST:
+    cliente = get_object_or_404(Cliente, id=request.POST['excluir_cliente_id'])
+    try:
+        # Excluir registros relacionados
+        NotaInterna.objects.filter(cliente=cliente).delete()
+        ContatoCliente.objects.filter(cliente=cliente).delete()
+        EtapaRelacionamento.objects.filter(cliente=cliente).delete()
+        Pedido.objects.filter(cliente=cliente).delete()
+
+        cliente.delete()
+        messages.success(request, 'Cliente e todos os dados relacionados excluídos com sucesso.')
+    except Exception as e:
+        messages.error(request, f'Erro ao excluir cliente: {e}')
+    return redirect('cadastrar_cliente')
         else:
             form = ClienteForm(request.POST)
 
