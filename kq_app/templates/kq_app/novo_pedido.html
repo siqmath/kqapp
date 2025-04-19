@@ -12,140 +12,218 @@
             margin: 0;
             padding: 0;
         }
+
         header {
             background-color: #3D3D6A;
             color: white;
             padding: 20px;
             text-align: center;
         }
+
         .container {
-            max-width: 1000px;
+            max-width: 800px;
             margin: 20px auto;
             padding: 20px;
             background-color: white;
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
+
         .form-group {
             margin-bottom: 15px;
         }
+
         .form-group label {
             display: block;
             margin-bottom: 5px;
         }
-        .form-group input,
+
         .form-group select,
+        .form-group input,
         .form-group textarea {
             width: 100%;
             padding: 10px;
             border: 1px solid #ccc;
             border-radius: 4px;
+            box-sizing: border-box;
         }
+
         .button {
+            display: inline-block;
             background-color: #3D3D6A;
             color: white;
             padding: 10px 20px;
+            text-decoration: none;
             border: none;
             border-radius: 5px;
-            cursor: pointer;
+            transition: background-color 0.3s;
             font-size: 16px;
-            margin: 10px 5px 10px 0;
+            text-align: center;
+            margin: 5px 0;
+            cursor: pointer;
         }
+
         .button:hover {
             background-color: #2D2D4A;
         }
-        .search-bar {
-            margin-bottom: 20px;
-        }
-        .search-bar input[type="text"] {
-            width: 80%;
-            padding: 8px;
-            margin-right: 10px;
-        }
-        .os-item {
+
+        .os-container {
+            margin-top: 20px;
             border: 1px solid #ccc;
             padding: 10px;
-            margin-bottom: 15px;
             border-radius: 4px;
         }
-        .remove-os {
-            background-color: #e74c3c;
-            color: white;
-            padding: 5px 10px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
+
+        .os-item {
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 4px;
         }
-        .remove-os:hover {
-            background-color: #c0392b;
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
         }
-        .errorlist { color: red; }
+
+        th,
+        td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #f0f0f0;
+        }
+
+        .errorlist {
+            color: red;
+            margin-top: 5px;
+        }
     </style>
 </head>
+
 <body>
 <header>
     <h1>Criar Novo Pedido</h1>
 </header>
-<div class="container">
-    <div class="search-bar">
-        <form method="GET" action="">
-            <input type="text" name="busca" placeholder="Buscar cliente por nome..." value="{{ request.GET.busca }}">
-            <button type="submit" class="button">Buscar</button>
-        </form>
-    </div>
 
-    <form method="POST" enctype="multipart/form-data">
+<div class="container">
+    <a href="{% url 'cadastrar_cliente' %}" class="button">Cadastrar Cliente</a>
+
+    <form action="" method="GET">
+        <div class="form-group">
+            <label for="busca_cliente">Buscar cliente por nome:</label>
+            <input type="text" name="busca" id="busca_cliente" placeholder="Digite o nome do cliente..." value="{{ request.GET.busca }}">
+            <button type="submit" class="button">Buscar</button>
+        </div>
+    </form>
+
+    <form action="{% url 'novo_pedido' %}" method="POST" enctype="multipart/form-data">
         {% csrf_token %}
 
         <h2>Dados do Pedido</h2>
+
         <div class="form-group">
-            <label>Cliente:</label>
+            <label for="{{ pedido_form.cliente.id_for_label }}">Cliente:</label>
             {{ pedido_form.cliente }}
+            {% if pedido_form.cliente.errors %}
+            <ul class="errorlist">{{ pedido_form.cliente.errors }}</ul>
+            {% endif %}
         </div>
+
         <div class="form-group">
-            <label>Data de Entrega:</label>
+            <label for="{{ pedido_form.data_entrega.id_for_label }}">Data de Entrega:</label>
             {{ pedido_form.data_entrega }}
+            {% if pedido_form.data_entrega.errors %}
+            <ul class="errorlist">{{ pedido_form.data_entrega.errors }}</ul>
+            {% endif %}
         </div>
+
         <div class="form-group">
-            <label>Observações:</label>
+            <label for="{{ pedido_form.observacoes.id_for_label }}">Observações:</label>
             {{ pedido_form.observacoes }}
+            {% if pedido_form.observacoes.errors %}
+            <ul class="errorlist">{{ pedido_form.observacoes.errors }}</ul>
+            {% endif %}
         </div>
+
         <div class="form-group">
-            <label>Frete (R$):</label>
+            <label for="{{ pedido_form.frete.id_for_label }}">Frete (R$):</label>
             {{ pedido_form.frete }}
+            {% if pedido_form.frete.errors %}
+            <ul class="errorlist">{{ pedido_form.frete.errors }}</ul>
+            {% endif %}
         </div>
 
         <h2>Ordens de Serviço</h2>
-        {{ ordem_de_servico_formset.management_form }}
-        <div id="os-list">
+        <div class="os-container" id="os-list">
+            {{ ordem_de_servico_formset.management_form }}
             {% for form in ordem_de_servico_formset %}
-                <div class="os-item">
-                    <button type="button" class="remove-os">Remover</button>
-                    {{ form.as_p }}
+            <div class="os-item">
+                <h3>Ordem de Serviço</h3>
+                <div class="form-group">
+                    <label for="{{ form.produto.id_for_label }}">Produto:</label>
+                    <select name="{{ form.prefix }}-produto" id="{{ form.produto.id_for_label }}" class="form-control">
+                        <option value="">Selecione um produto</option>
+                        {% for produto in produtos %}
+                        <option value="{{ produto.id }}">{{ produto.nome }}</option>
+                        {% endfor %}
+                    </select>
+                    {% if form.produto.errors %}
+                    <ul class="errorlist">{{ form.produto.errors }}</ul>
+                    {% endif %}
                 </div>
+                <div class="form-group">
+                    <label for="{{ form.preco_unitario.id_for_label }}">Preço Unitário (R$):</label>
+                    {{ form.preco_unitario }}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.quantidade_digitada.id_for_label }}">Quantidade:</label>
+                    {{ form.quantidade_digitada }}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.observacoes.id_for_label }}">Observações:</label>
+                    {{ form.observacoes }}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.mockup.id_for_label }}">Mockup:</label>
+                    {{ form.mockup }}
+                </div>
+
+                <h4>Tabela de Tamanhos</h4>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Tamanho</th>
+                            <th>Masculino</th>
+                            <th>Feminino</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>PP</td><td>{{ form.pp_masculino }}</td><td>{{ form.pp_feminino }}</td></tr>
+                        <tr><td>P</td><td>{{ form.p_masculino }}</td><td>{{ form.p_feminino }}</td></tr>
+                        <tr><td>M</td><td>{{ form.m_masculino }}</td><td>{{ form.m_feminino }}</td></tr>
+                        <tr><td>G</td><td>{{ form.g_masculino }}</td><td>{{ form.g_feminino }}</td></tr>
+                        <tr><td>GG</td><td>{{ form.gg_masculino }}</td><td>{{ form.gg_feminino }}</td></tr>
+                        <tr><td>XG</td><td>{{ form.xg_masculino }}</td><td>{{ form.xg_feminino }}</td></tr>
+                        <tr><td>ESP</td><td>{{ form.esp_masculino }}</td><td>{{ form.esp_feminino }}</td></tr>
+                    </tbody>
+                </table>
+                <input type="hidden" name="{{ form.prefix }}-DELETE" id="id_{{ form.prefix }}-DELETE" value="{{ form.DELETE.value }}">
+            </div>
             {% endfor %}
         </div>
 
-        <button type="button" id="add-os" class="button">Adicionar Ordem de Serviço</button>
         <button type="submit" class="button">Finalizar Pedido</button>
         <a href="{% url 'home' %}" class="button" style="background-color: #e67e22;">Menu</a>
     </form>
-    {% if mensagem_erro %}<p class="errorlist">{{ mensagem_erro }}</p>{% endif %}
-</div>
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script>
-    $(document).ready(function () {
-        $('#add-os').click(function () {
-            var form_idx = $('#id_ordem_de_servico-TOTAL_FORMS').val();
-            var empty_form = `{{ ordem_de_servico_formset.empty_form.as_p|escapejs }}`;
-            $('#os-list').append('<div class="os-item">' + empty_form.replace(/__prefix__/g, form_idx) + '</div>');
-            $('#id_ordem_de_servico-TOTAL_FORMS').val(parseInt(form_idx) + 1);
-        });
 
-        $(document).on('click', '.remove-os', function () {
-            $(this).closest('.os-item').remove();
-        });
-    });
-</script>
+    {% if mensagem_erro %}
+    <p style="color: red;">{{ mensagem_erro }}</p>
+    {% endif %}
+</div>
 </body>
 </html>
