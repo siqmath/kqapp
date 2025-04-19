@@ -70,16 +70,11 @@ class Produto(models.Model):
     ]
 
     nome = models.CharField(max_length=200, verbose_name="Nome do Produto")
-    material = models.CharField(
-        max_length=200, verbose_name="Material do Produto", default="Material")
-    rendimento = models.DecimalField(
-        max_digits=10, decimal_places=2, verbose_name="Rendimento", default=1)
-    unidade_medida = models.CharField(
-        max_length=10,
-        choices=UNIDADE_CHOICES,
-        default='kg',
-        verbose_name="Unidade de Medida"
-    )
+    material = models.CharField(max_length=200, verbose_name="Material do Produto", default="Material")
+    rendimento = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Rendimento", default=1)
+    unidade_medida = models.CharField(max_length=10, choices=UNIDADE_CHOICES, default='kg', verbose_name="Unidade de Medida")
+    preco_costura = models.DecimalField(max_digits=5, decimal_places=2, default=0.00, verbose_name="Preço de Costura")
+    percentual_comissao = models.DecimalField(max_digits=5, decimal_places=2, default=0.00, verbose_name="% Comissão")
 
     class Meta:
         verbose_name = "Produto"
@@ -230,3 +225,5 @@ class NotaInterna(models.Model):
     autor = models.CharField(max_length=100)
     texto = models.TextField()
     data = models.DateTimeField(default=timezone.now)
+
+
