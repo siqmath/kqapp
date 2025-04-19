@@ -25,55 +25,52 @@ def home(request):
     return render(request, 'kq_app/home.html')
 
 
-def cadastrar_cliente(request):
-    """Cadastra novo cliente, exibe lista com busca, paginação e permite excluir/editar."""
-    # Trata exclusão
-    if request.method == 'POST':
-        if 'excluir_cliente_id' in request.POST:
-            cliente_id = request.POST.get('excluir_cliente_id')
-            Cliente.objects.filter(id=cliente_id).delete()
-            messages.success(request, 'Cliente excluído com sucesso!')
-            return redirect('cadastrar_cliente')
-        elif 'editar_cliente_id' in request.POST:
-            cliente = get_object_or_404(Cliente, id=request.POST.get('editar_cliente_id'))
-            form = ClienteForm(request.POST, instance=cliente)
-            if form.is_valid():
-                form.save()
-                messages.success(request, 'Cliente atualizado com sucesso!')
-                return redirect('cadastrar_cliente')
-            else:
-                messages.error(request, 'Erro ao atualizar cliente.')
-        else:
-            # Cadastro normal
-            form = ClienteForm(request.POST)
-            if form.is_valid():
-                form.save()
-                messages.success(request, 'Cliente cadastrado com sucesso!')
-                return redirect('cadastrar_cliente')
-            else:
-                messages.error(request, 'Erro ao cadastrar cliente.')
-    else:
-        # Checa se estamos editando
-        editar_id = request.GET.get('editar')
-        if editar_id:
-            cliente = get_object_or_404(Cliente, id=editar_id)
-            form = ClienteForm(instance=cliente)
-        else:
-            form = ClienteForm()
+def cliente_detalhes(request, cliente_id):
+    cliente = get_object_or_404(Cliente, id=cliente_id)
+    contatos = ContatoCliente.objects.filter(cliente=cliente).order_by('-data_contato')
+    notas = NotaInterna.objects.filter(cliente=cliente).order_by('-data')
+    etapa, _ = EtapaRelacionamento.objects.get_or_create(cliente=cliente)
 
-    busca = request.GET.get('busca', '')
-    clientes = Cliente.objects.filter(nome__icontains=busca).order_by('-data_cadastro')
-    paginator = Paginator(clientes, 5)  # 5 por página
-    pagina_numero = request.GET.get('pagina')
-    pagina_clientes = paginator.get_page(pagina_numero)
+    contato_form = ContatoClienteForm()
+    nota_form = NotaInternaForm()
+    etapa_form = EtapaRelacionamentoForm(instance=etapa)
+
+    if request.method == 'POST':
+        if 'add_contato' in request.POST:
+            contato_form = ContatoClienteForm(request.POST)
+            if contato_form.is_valid():
+                contato = contato_form.save(commit=False)
+                contato.cliente = cliente
+                contato.save()
+                messages.success(request, 'Contato registrado com sucesso.')
+                return redirect('cliente_detalhes', cliente_id=cliente.id)
+
+        elif 'add_nota' in request.POST:
+            nota_form = NotaInternaForm(request.POST)
+            if nota_form.is_valid():
+                nota = nota_form.save(commit=False)
+                nota.cliente = cliente
+                nota.save()
+                messages.success(request, 'Nota adicionada com sucesso.')
+                return redirect('cliente_detalhes', cliente_id=cliente.id)
+
+        elif 'update_etapa' in request.POST:
+            etapa_form = EtapaRelacionamentoForm(request.POST, instance=etapa)
+            if etapa_form.is_valid():
+                etapa_form.save()
+                messages.success(request, 'Etapa de relacionamento atualizada.')
+                return redirect('cliente_detalhes', cliente_id=cliente.id)
 
     context = {
-        'form': form,
-        'clientes': pagina_clientes,
-        'busca': busca,
-        'editando': editar_id if request.method != 'POST' else None
+        'cliente': cliente,
+        'contatos': contatos,
+        'notas': notas,
+        'etapa': etapa,
+        'contato_form': contato_form,
+        'nota_form': nota_form,
+        'etapa_form': etapa_form,
     }
-    return render(request, 'kq_app/cadastrar_cliente.html', context)
+    return render(request, 'kq_app/cliente_detalhes.html', context)
 
 
 def novo_pedido(request):
