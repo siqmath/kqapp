@@ -23,7 +23,47 @@ from django.core.paginator import Paginator
 def home(request):
     """Página inicial."""
     return render(request, 'kq_app/home.html')
+    
+def cadastrar_cliente(request):
+    busca = request.GET.get('busca', '')
+    clientes = Cliente.objects.filter(nome__icontains=busca).order_by('nome')
+    paginator = Paginator(clientes, 5)
+    pagina = request.GET.get('pagina')
+    clientes = paginator.get_page(pagina)
 
+    form = ClienteForm()
+    editando = None
+
+    if request.method == 'POST':
+        if 'editar_cliente_id' in request.POST:
+            cliente = get_object_or_404(Cliente, id=request.POST['editar_cliente_id'])
+            form = ClienteForm(request.POST, instance=cliente)
+            editando = cliente.id
+        elif 'excluir_cliente_id' in request.POST:
+            cliente = get_object_or_404(Cliente, id=request.POST['excluir_cliente_id'])
+            cliente.delete()
+            messages.success(request, 'Cliente excluído com sucesso.')
+            return redirect('cadastrar_cliente')
+        else:
+            form = ClienteForm(request.POST)
+
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Cliente salvo com sucesso.')
+            return redirect('cadastrar_cliente')
+
+    elif 'editar' in request.GET:
+        cliente = get_object_or_404(Cliente, id=request.GET['editar'])
+        form = ClienteForm(instance=cliente)
+        editando = cliente.id
+
+    context = {
+        'form': form,
+        'clientes': clientes,
+        'busca': busca,
+        'editando': editando
+    }
+    return render(request, 'kq_app/cadastrar_cliente.html', context)
 
 def cliente_detalhes(request, cliente_id):
     cliente = get_object_or_404(Cliente, id=cliente_id)
