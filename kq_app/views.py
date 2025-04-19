@@ -1,10 +1,10 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.forms import formset_factory
-from .models import Cliente, Pedido, OrdemDeServico, Produto, Pagamento  # Importe o modelo Pagamento
+from .models import Cliente, Pedido, OrdemDeServico, Produto, Pagamento, ContatoCliente, EtapaRelacionamento, NotaInterna
 from .forms import (
     ClienteForm, PedidoForm, OrdemDeServicoForm, OrdemDeServicoFormSet,
-    ProdutoForm, CustoForm, PagamentoForm
+    ProdutoForm, CustoForm, PagamentoForm, ContatoClienteForm, EtapaRelacionamentoForm, NotaInternaForm
 )
 from django.db.models import Sum
 from django.http import JsonResponse, HttpResponse
@@ -440,3 +440,56 @@ def excluir_pedido(request, pedido_id):
         # logging.error(f"Erro ao excluir pedido {pedido_id}: {e}", exc_info=True)
 
     return redirect('visualizar_producao')
+
+def cliente_detalhes(request, cliente_id):
+    cliente = get_object_or_404(Cliente, id=cliente_id)
+    contatos = ContatoCliente.objects.filter(cliente=cliente).order_by('-data_contato')
+    notas = NotaInterna.objects.filter(cliente=cliente).order_by('-data')
+    etapa = EtapaRelacionamento.objects.filter(cliente=cliente).first()
+
+    contato_form = ContatoClienteForm()
+    nota_form = NotaInternaForm()
+    etapa_form = EtapaRelacionamentoForm(instance=etapa) if etapa else EtapaRelacionamentoForm()
+
+    context = {
+        'cliente': cliente,
+        'contatos': contatos,
+        'notas': notas,
+        'etapa': etapa,
+        'contato_form': contato_form,
+        'nota_form': nota_form,
+        'etapa_form': etapa_form,
+    }
+    return render(request, 'kq_app/cliente_detalhes.html', context)
+
+def adicionar_contato_cliente(request, cliente_id):
+    cliente = get_object_or_404(Cliente, id=cliente_id)
+    if request.method == 'POST':
+        form = ContatoClienteForm(request.POST)
+        if form.is_valid():
+            contato = form.save(commit=False)
+            contato.cliente = cliente
+            contato.save()
+            messages.success(request, 'Contato registrado com sucesso.')
+    return redirect('cliente_detalhes', cliente_id=cliente.id)
+
+def adicionar_nota_interna(request, cliente_id):
+    cliente = get_object_or_404(Cliente, id=cliente_id)
+    if request.method == 'POST':
+        form = NotaInternaForm(request.POST)
+        if form.is_valid():
+            nota = form.save(commit=False)
+            nota.cliente = cliente
+            nota.save()
+            messages.success(request, 'Nota interna salva com sucesso.')
+    return redirect('cliente_detalhes', cliente_id=cliente.id)
+
+def atualizar_etapa_relacionamento(request, cliente_id):
+    cliente = get_object_or_404(Cliente, id=cliente_id)
+    etapa, _ = EtapaRelacionamento.objects.get_or_create(cliente=cliente)
+    if request.method == 'POST':
+        form = EtapaRelacionamentoForm(request.POST, instance=etapa)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Etapa de relacionamento atualizada.')
+    return redirect('cliente_detalhes', cliente_id=cliente.id)
