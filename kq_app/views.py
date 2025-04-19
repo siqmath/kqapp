@@ -77,34 +77,42 @@ def cadastrar_cliente(request):
 
 
 def novo_pedido(request):
-    produtos = Produto.objects.all()  # Obtém todos os produtos
+    produtos = Produto.objects.all()
+    busca = request.GET.get('busca', '')
+
+    # Filtra os clientes, se houver busca por nome
+    if busca:
+        clientes_filtrados = Cliente.objects.filter(nome__icontains=busca)
+        pedido_form = PedidoForm()
+        pedido_form.fields['cliente'].queryset = clientes_filtrados
+    else:
+        pedido_form = PedidoForm()
+
+    OrdemDeServicoFormSetFactory = formset_factory(OrdemDeServicoForm, extra=1, can_delete=True)
 
     if request.method == 'POST':
         pedido_form = PedidoForm(request.POST)
-        ordem_de_servico_formset = OrdemDeServicoFormSet(request.POST, request.FILES,
-                                                         prefix='ordem_de_servico')
+        ordem_de_servico_formset = OrdemDeServicoFormSetFactory(request.POST, request.FILES, prefix='ordem_de_servico')
 
         if pedido_form.is_valid() and ordem_de_servico_formset.is_valid():
-            pedido = pedido_form.save()  # Salva o pedido imediatamente
+            pedido = pedido_form.save()
             valor_total = 0
 
             for form in ordem_de_servico_formset:
                 if form.has_changed():
-                    ordem_de_servico = form.save(commit=False)  # Não salva ainda
+                    os = form.save(commit=False)
 
-                    # Calcula a soma dos tamanhos
                     soma_tamanhos = (
-                            (ordem_de_servico.pp_masculino or 0) + (ordem_de_servico.pp_feminino or 0) +
-                            (ordem_de_servico.p_masculino or 0) + (ordem_de_servico.p_feminino or 0) +
-                            (ordem_de_servico.m_masculino or 0) + (ordem_de_servico.m_feminino or 0) +
-                            (ordem_de_servico.g_masculino or 0) + (ordem_de_servico.g_feminino or 0) +
-                            (ordem_de_servico.gg_masculino or 0) + (ordem_de_servico.gg_feminino or 0) +
-                            (ordem_de_servico.xg_masculino or 0) + (ordem_de_servico.xg_feminino or 0) +
-                            (ordem_de_servico.esp_masculino or 0) + (ordem_de_servico.esp_feminino or 0)
+                        (os.pp_masculino or 0) + (os.pp_feminino or 0) +
+                        (os.p_masculino or 0) + (os.p_feminino or 0) +
+                        (os.m_masculino or 0) + (os.m_feminino or 0) +
+                        (os.g_masculino or 0) + (os.g_feminino or 0) +
+                        (os.gg_masculino or 0) + (os.gg_feminino or 0) +
+                        (os.xg_masculino or 0) + (os.xg_feminino or 0) +
+                        (os.esp_masculino or 0) + (os.esp_feminino or 0)
                     )
 
-                    # Verifica se a quantidade informada corresponde à soma da grade de tamanhos
-                    if ordem_de_servico.quantidade_digitada != soma_tamanhos:
+                    if os.quantidade_digitada != soma_tamanhos:
                         context = {
                             'pedido_form': pedido_form,
                             'ordem_de_servico_formset': ordem_de_servico_formset,
@@ -113,28 +121,27 @@ def novo_pedido(request):
                         }
                         return render(request, 'kq_app/novo_pedido.html', context)
 
-                    # Se a validação passou, salva a ordem de serviço
-                    ordem_de_servico.pedido = pedido
-                    ordem_de_servico.save()
+                    os.pedido = pedido
+                    os.save()
+                    valor_total += os.preco_unitario * os.quantidade
 
-                    valor_total += ordem_de_servico.preco_unitario * ordem_de_servico.quantidade
-
-            # Se todas as validações passaram, salva o pedido
-            pedido.valor_total = valor_total + pedido_form.cleaned_data['frete']
+            pedido.valor_total = valor_total + pedido_form.cleaned_data.get('frete', 0)
             pedido.save()
 
             return redirect('detalhes_pedido', pedido_id=pedido.id)
+
         else:
+            ordem_de_servico_formset = OrdemDeServicoFormSetFactory(request.POST, request.FILES, prefix='ordem_de_servico')
             messages.error(request, 'Erro ao cadastrar pedido. Verifique os dados.')
+
     else:
-        pedido_form = PedidoForm()
-        ordem_de_servico_formset = OrdemDeServicoFormSet(prefix='ordem_de_servico')
+        ordem_de_servico_formset = OrdemDeServicoFormSetFactory(prefix='ordem_de_servico')
 
     context = {
         'pedido_form': pedido_form,
         'ordem_de_servico_formset': ordem_de_servico_formset,
-        'produtos': produtos,  # Passa a lista de produtos para o template
-        'mensagem_erro': None  # Inicializa a mensagem de erro como None
+        'produtos': produtos,
+        'mensagem_erro': None
     }
     return render(request, 'kq_app/novo_pedido.html', context)
 
