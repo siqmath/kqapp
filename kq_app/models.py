@@ -225,5 +225,27 @@ class NotaInterna(models.Model):
     autor = models.CharField(max_length=100)
     texto = models.TextField()
     data = models.DateTimeField(default=timezone.now)
+    
+class PagamentoEtapa(models.Model):
+    ordem_de_servico = models.OneToOneField(
+        OrdemDeServico, on_delete=models.CASCADE, related_name='pagamento_etapa'
+    )
 
+    pago_materia_prima = models.BooleanField(default=False, verbose_name="Matéria-Prima Paga")
+    pago_costura = models.BooleanField(default=False, verbose_name="Costura Paga")
+    pago_estampa = models.BooleanField(default=False, verbose_name="Estampa Paga")
+    pago_bordado = models.BooleanField(default=False, verbose_name="Bordado Pago")
+    pago_terceirizacao = models.BooleanField(default=False, verbose_name="Terceirização Paga")
+    pago_transporte = models.BooleanField(default=False, verbose_name="Transporte Pago")
+    pago_comissao = models.BooleanField(default=False, verbose_name="Comissão Paga")
+    pago_imposto = models.BooleanField(default=False, verbose_name="Imposto Pago")
+
+    atualizado_em = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Status de Pagamento por Etapa"
+        verbose_name_plural = "Status de Pagamentos por Etapa"
+
+    def __str__(self):
+        return f"Pagamentos da OS {self.ordem_de_servico.numero_os}"
 
