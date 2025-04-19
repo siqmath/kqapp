@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalhes do Cliente - Sistema KQ</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #3D3D6A;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .container {
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .section {
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .button {
+            background-color: #3D3D6A;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .button:hover {
+            background-color: #2D2D4A;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #f0f0f0;
+        }
+        h2 {
+            color: #3D3D6A;
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <h1>Detalhes do Cliente</h1>
+</header>
+<div class="container">
+    <div class="section">
+        <h2>{{ cliente.nome }}</h2>
+        <p><strong>Email:</strong> {{ cliente.email }}</p>
+        <p><strong>Telefone:</strong> {{ cliente.telefone }}</p>
+        <p><strong>Equipe:</strong> {{ cliente.equipe }}</p>
+        <p><strong>Endereço:</strong> {{ cliente.endereco }}</p>
+        <p><strong>CPF/CNPJ:</strong> {{ cliente.cpf_cnpj }}</p>
+        <p><strong>Data de Cadastro:</strong> {{ cliente.data_cadastro|date:"d/m/Y H:i" }}</p>
+    </div>
+
+    <div class="section">
+        <h2>Etapa do Relacionamento</h2>
+        <form method="POST">
+            {% csrf_token %}
+            {{ etapa_form.as_p }}
+            <button type="submit" name="update_etapa" class="button">Atualizar Etapa</button>
+        </form>
+    </div>
+
+    <div class="section">
+        <h2>Registrar Contato</h2>
+        <form method="POST">
+            {% csrf_token %}
+            {{ contato_form.as_p }}
+            <button type="submit" name="add_contato" class="button">Registrar Contato</button>
+        </form>
+        <h3>Histórico de Contatos</h3>
+        <table>
+            <thead>
+                <tr><th>Data</th><th>Tipo</th><th>Descrição</th></tr>
+            </thead>
+            <tbody>
+                {% for contato in contatos %}
+                <tr>
+                    <td>{{ contato.data_contato|date:"d/m/Y H:i" }}</td>
+                    <td>{{ contato.get_tipo_display }}</td>
+                    <td>{{ contato.descricao }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="3">Nenhum contato registrado.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="section">
+        <h2>Notas Internas</h2>
+        <form method="POST">
+            {% csrf_token %}
+            {{ nota_form.as_p }}
+            <button type="submit" name="add_nota" class="button">Salvar Nota</button>
+        </form>
+        <h3>Histórico de Notas</h3>
+        <table>
+            <thead>
+                <tr><th>Data</th><th>Autor</th><th>Texto</th></tr>
+            </thead>
+            <tbody>
+                {% for nota in notas %}
+                <tr>
+                    <td>{{ nota.data|date:"d/m/Y H:i" }}</td>
+                    <td>{{ nota.autor }}</td>
+                    <td>{{ nota.texto }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="3">Nenhuma nota registrada.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <a href="{% url 'cadastrar_cliente' %}" class="button">Voltar</a>
+</div>
+</body>
+</html>
