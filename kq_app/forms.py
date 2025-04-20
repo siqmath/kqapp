@@ -2,8 +2,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 from django.forms import formset_factory
-from .models import Cliente, Pedido, OrdemDeServico, Produto, Custo, Pagamento, ContatoCliente, EtapaRelacionamento, NotaInterna
-import re
+from .models import Cliente, Pedido, OrdemDeServico, Produto, Custo, Pagamento, ContatoCliente, EtapaRelacionamento, NotaInterna, EntradaEstoque
 
 class ClienteForm(forms.ModelForm):
     class Meta:
