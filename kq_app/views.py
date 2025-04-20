@@ -671,4 +671,26 @@ def resumo_financeiro(request):
         'produtos': Produto.objects.all()
     })
 
+def registrar_entrada_estoque(request):
+    if request.method == 'POST':
+        form = EntradaEstoqueForm(request.POST)
+        if form.is_valid():
+            entrada = form.save()
+            estoque, criado = Estoque.objects.get_or_create(
+                produto=entrada.produto,
+                cor=entrada.cor,
+                defaults={'quantidade': entrada.quantidade}
+            )
+            if not criado:
+                estoque.quantidade += entrada.quantidade
+                estoque.save()
+
+            messages.success(request, 'Entrada de estoque registrada com sucesso!')
+            return redirect('registrar_entrada_estoque')
+        else:
+            messages.error(request, 'Erro ao registrar entrada. Verifique os dados.')
+    else:
+        form = EntradaEstoqueForm()
+
+    return render(request, 'kq_app/entrada_estoque.html', {'form': form})
 
