@@ -2,133 +2,68 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Resumo Financeiro - Sistema KQ</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resumo Financeiro</title>
     <style>
-        body { font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0; }
-        header { background-color: #3D3D6A; color: white; padding: 20px; text-align: center; }
-        .container { max-width: 1200px; margin: 20px auto; padding: 20px; background: white; border-radius: 8px; }
-        h2 { color: #3D3D6A; }
-        .button-group { text-align: center; margin-bottom: 20px; }
-        .button-group button {
-            padding: 10px 20px;
-            margin: 0 10px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            background-color: #cce0ff; /* Azul claro padrão */
-            color: #333;
-            font-weight: bold;
-        }
-        .button-group button.active {
-            background-color: #3D3D6A; /* Azul padrão */
-            color: white;
-        }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td {
-            border: 1px solid #ccc;
-            padding: 10px;
-            text-align: center;
-        }
+        body { font-family: Arial, sans-serif; background-color: #f4f4f4; color: #333; padding: 20px; }
+        h1 { color: #3D3D6A; }
+        .container { background: white; padding: 20px; border-radius: 10px; max-width: 1100px; margin: auto; }
+        .btn-container { margin-bottom: 20px; }
+        .btn { padding: 10px 15px; margin-right: 10px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .btn.active { background-color: #3D3D6A; color: white; }
+        .btn.inactive { background-color: #dce4f4; color: #3D3D6A; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
         th { background-color: #f0f0f0; }
         .hidden { display: none; }
+        .filter-section { margin-bottom: 20px; }
+        .filter-section input, .filter-section select { padding: 5px; margin-right: 10px; }
+        .menu-link { display: inline-block; margin-top: 20px; text-decoration: none; padding: 10px 20px; background: #3D3D6A; color: white; border-radius: 5px; }
     </style>
 </head>
 <body>
-<header>
-    <h1>Resumo Financeiro</h1>
-</header>
-<div class="container">
-    <div class="button-group">
-        <button id="btnFaturamento" class="active" onclick="mostrarTabela('faturamento')">Faturamento</button>
-        <button id="btnCustos" onclick="mostrarTabela('custos')">Custos</button>
-        <button id="btnResultado" onclick="mostrarTabela('resultado')">Resultado</button>
+    <div class="container">
+        <h1>Resumo Financeiro</h1>
+
+        <div class="filter-section">
+            <form method="get">
+                <input type="text" name="cliente" placeholder="Buscar por cliente">
+                <input type="text" name="produto" placeholder="Buscar por produto">
+                <input type="date" name="data_inicio">
+                <input type="date" name="data_fim">
+                <button type="submit">Filtrar</button>
+            </form>
+        </div>
+
+        <div class="btn-container">
+            <button class="btn active" onclick="mostrarTabela('faturamento')">Faturamento</button>
+            <button class="btn inactive" onclick="mostrarTabela('custos')">Custos</button>
+            <button class="btn inactive" onclick="mostrarTabela('resultado')">Resultado</button>
+            <a href="?tipo=faturamento" class="btn inactive">Exportar Faturamento CSV</a>
+            <a href="?tipo=custos" class="btn inactive">Exportar Custos CSV</a>
+            <a href="?tipo=resultado" class="btn inactive">Exportar Resultado CSV</a>
+        </div>
+
+        <div id="tabela_faturamento">{{ tabela_faturamento|safe }}</div>
+        <div id="tabela_custos" class="hidden">{{ tabela_custos|safe }}</div>
+        <div id="tabela_resultado" class="hidden">{{ tabela_resultado|safe }}</div>
+
+        <a href="/" class="menu-link">Voltar ao Menu</a>
     </div>
 
-    <!-- Tabela de Faturamento -->
-    <table id="tabelaFaturamento">
-        <thead>
-            <tr>
-                <th>Pedido</th><th>Cliente</th><th>Produto</th><th>Data Entrega</th><th>Quantidade</th><th>Valor Unitário</th><th>Valor Total</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for pedido in pedidos %}
-                {% for os in pedido.ordens_de_servico.all %}
-                <tr>
-                    <td>{{ pedido.id }}</td>
-                    <td>{{ pedido.cliente.nome }}</td>
-                    <td>{{ os.produto.nome }}</td>
-                    <td>{{ pedido.data_entrega|date:"d/m/Y" }}</td>
-                    <td>{{ os.quantidade }}</td>
-                    <td>R$ {{ os.preco_unitario }}</td>
-                    <td>R$ {{ os.preco_unitario|floatformat:2|add:os.quantidade|floatformat:2 }}</td>
-                </tr>
-                {% endfor %}
-            {% endfor %}
-        </tbody>
-    </table>
+    <script>
+        function mostrarTabela(tipo) {
+            document.getElementById('tabela_faturamento').classList.add('hidden');
+            document.getElementById('tabela_custos').classList.add('hidden');
+            document.getElementById('tabela_resultado').classList.add('hidden');
 
-    <!-- Tabela de Custos -->
-    <table id="tabelaCustos" class="hidden">
-        <thead>
-            <tr>
-                <th>Pedido</th><th>Cliente</th><th>Produto</th><th>Item</th><th>Valor</th><th>Pago?</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for pedido in pedidos %}
-                {% for os in pedido.ordens_de_servico.all %}
-                    {% for item in os.itens_custo.all %}
-                    <tr>
-                        <td>{{ pedido.id }}</td>
-                        <td>{{ pedido.cliente.nome }}</td>
-                        <td>{{ os.produto.nome }}</td>
-                        <td>{{ item.tipo }}</td>
-                        <td>R$ {{ item.valor }}</td>
-                        <td>{{ item.pago|yesno:"✔,✗" }}</td>
-                    </tr>
-                    {% endfor %}
-                {% endfor %}
-            {% endfor %}
-        </tbody>
-    </table>
+            document.querySelectorAll('.btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.btn').forEach(btn => btn.classList.add('inactive'));
 
-    <!-- Tabela de Resultado -->
-    <table id="tabelaResultado" class="hidden">
-        <thead>
-            <tr>
-                <th>Pedido</th><th>Cliente</th><th>Produto</th><th>Entrega</th><th>Valor Total</th><th>Total Custos</th><th>Lucro</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for pedido in pedidos %}
-                {% for os in pedido.ordens_de_servico.all %}
-                    <tr>
-                        <td>{{ pedido.id }}</td>
-                        <td>{{ pedido.cliente.nome }}</td>
-                        <td>{{ os.produto.nome }}</td>
-                        <td>{{ pedido.data_entrega|date:"d/m/Y" }}</td>
-                        <td>R$ {{ os.preco_unitario|floatformat:2|add:os.quantidade|floatformat:2 }}</td>
-                        <td>R$ {{ os.total_custos }}</td>
-                        <td>R$ {{ os.lucro }}</td>
-                    </tr>
-                {% endfor %}
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
-
-<script>
-    function mostrarTabela(nome) {
-        const tabelas = ['faturamento', 'custos', 'resultado'];
-        tabelas.forEach(t => {
-            document.getElementById('tabela' + t.charAt(0).toUpperCase() + t.slice(1)).classList.add('hidden');
-            document.getElementById('btn' + t.charAt(0).toUpperCase() + t.slice(1)).classList.remove('active');
-        });
-        document.getElementById('tabela' + nome.charAt(0).toUpperCase() + nome.slice(1)).classList.remove('hidden');
-        document.getElementById('btn' + nome.charAt(0).toUpperCase() + nome.slice(1)).classList.add('active');
-    }
-</script>
-
+            document.getElementById(`tabela_${tipo}`).classList.remove('hidden');
+            event.target.classList.add('active');
+            event.target.classList.remove('inactive');
+        }
+    </script>
 </body>
 </html>
