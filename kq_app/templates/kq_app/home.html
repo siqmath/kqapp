@@ -3,59 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Página Inicial - Sistema KQ</title>
+    <title>Dashboard - Sistema KQ</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             background-color: #f4f4f4;
-            color: #333;
             margin: 0;
             padding: 0;
+            color: #333;
         }
         header {
             background-color: #3D3D6A;
             color: white;
-            padding: 20px;
+            padding: 30px;
             text-align: center;
         }
         .container {
-            padding: 20px;
-            text-align: center;
+            padding: 30px;
+            max-width: 1200px;
+            margin: auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 20px;
         }
         .button {
-            display: inline-block;
             background-color: #3D3D6A;
             color: white;
-            padding: 15px 30px;
-            margin: 10px;
+            padding: 20px;
+            text-align: center;
+            border-radius: 8px;
             text-decoration: none;
-            border: none;
-            border-radius: 5px;
-            transition: background-color 0.3s;
             font-size: 16px;
+            transition: 0.3s ease;
         }
         .button:hover {
             background-color: #2D2D4A;
+        }
+        footer {
+            text-align: center;
+            padding: 15px;
+            font-size: 13px;
+            color: #888;
         }
     </style>
 </head>
 <body>
 
 <header>
-    <h1>Bem-vindo ao Sistema KQ!</h1>
+    <h1>Sistema KQ</h1>
+    <p>Dashboard Administrativo - Controle Total da Operação</p>
 </header>
 
 <div class="container">
-    <h2>Selecione uma das opções abaixo:</h2>
     <a class="button" href="{% url 'novo_pedido' %}">Novo Pedido</a>
-    <a class="button" href="{% url 'cadastrar_cliente' %}">Cadastrar Cliente</a>
-    <a class="button" href="{% url 'visualizar_producao' %}">Acompanhar Pedidos</a>
-    <a class="button" href="{% url 'gerenciar_estoque' %}">Gerenciar Estoque</a>
-    <a class="button" href="{% url 'controle_financeiro' %}">Controle Financeiro</a>
+    <a class="button" href="{% url 'cadastrar_cliente' %}">Cadastro de Clientes</a>
+    <a class="button" href="{% url 'visualizar_producao' %}">Acompanhar Produção</a>
+    <a class="button" href="{% url 'gerenciar_estoque' %}">Estoque Atual</a>
+    <a class="button" href="{% url 'registrar_entrada_estoque' %}">Registrar Entrada Estoque</a>
+    <a class="button" href="{% url 'controle_financeiro' %}">Controle de Pagamentos</a>
+    <a class="button" href="{% url 'resumo_financeiro' %}">Resumo Financeiro</a>
     <a class="button" href="{% url 'lista_compra' %}">Lista de Compra</a>
-    <a class="button" href="{% url 'corteecostura' %}">Corte e Costura</a>
+    <a class="button" href="{% url 'corteecostura' %}">Corte & Costura</a>
     <a class="button" href="{% url 'gerenciar_produtos' %}">Gerenciar Produtos</a>
 </div>
+
+<footer>
+    Sistema desenvolvido com foco na produtividade e sustentabilidade da KQ.
+</footer>
 
 </body>
 </html>
