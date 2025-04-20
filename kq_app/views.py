@@ -524,6 +524,19 @@ def atualizar_etapa_relacionamento(request, cliente_id):
 def resumo_financeiro(request):
     pedidos = Pedido.objects.prefetch_related('ordens_de_servico').select_related('cliente')
 
+    filtro_cliente = request.GET.get('cliente')
+    filtro_data_inicio = request.GET.get('data_inicio')
+    filtro_data_fim = request.GET.get('data_fim')
+
+    if filtro_cliente:
+        pedidos = pedidos.filter(cliente__nome__icontains=filtro_cliente)
+
+    if filtro_data_inicio:
+        pedidos = pedidos.filter(data_criacao__gte=filtro_data_inicio)
+
+    if filtro_data_fim:
+        pedidos = pedidos.filter(data_criacao__lte=filtro_data_fim)
+
     linhas_faturamento = []
     linhas_resultado = []
     linhas_custos = []
@@ -542,7 +555,6 @@ def resumo_financeiro(request):
             for custo in custos_os:
                 custo_total += custo.valor
 
-            # Faturamento (tabela 1)
             linhas_faturamento.append(f"""
                 <tr>
                     <td>{pedido.id}</td>
@@ -555,7 +567,6 @@ def resumo_financeiro(request):
                 </tr>
             """)
 
-        # Custos (tabela 2)
         custos_pedido = Custo.objects.filter(ordem_de_servico__pedido=pedido)
         for custo in custos_pedido:
             linhas_custos.append(f"""
@@ -569,7 +580,6 @@ def resumo_financeiro(request):
                 </tr>
             """)
 
-        # Resultado (tabela 3)
         linhas_resultado.append(f"""
             <tr>
                 <td>{pedido.id}</td>
@@ -622,3 +632,4 @@ def resumo_financeiro(request):
         'tabela_custos': tabela_custos,
         'tabela_resultado': tabela_resultado,
     })
+
