@@ -23,5 +23,6 @@ urlpatterns = [
     path('resumo_financeiro/', views.resumo_financeiro, name='resumo_financeiro'),
     path('exportar_csv/', views.exportar_csv, name='exportar_csv'),
     path('estoque/gerenciar/', views.gerenciar_estoque, name='gerenciar_estoque'),
+    path('estoque/entrada/', views.registrar_entrada_estoque, name='registrar_entrada_estoque'),
 
 ]
