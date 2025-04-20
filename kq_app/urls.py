@@ -22,4 +22,6 @@ urlpatterns = [
     path('clientes/<int:cliente_id>/', views.cliente_detalhes, name='cliente_detalhes'),
     path('resumo_financeiro/', views.resumo_financeiro, name='resumo_financeiro'),
     path('exportar_csv/', views.exportar_csv, name='exportar_csv'),
+    path('estoque/gerenciar/', views.gerenciar_estoque, name='gerenciar_estoque'),
+
 ]
