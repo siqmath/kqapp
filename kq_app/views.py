@@ -1,10 +1,10 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.forms import formset_factory
-from .models import Cliente, Pedido, OrdemDeServico, Produto, Pagamento, ContatoCliente, EtapaRelacionamento, NotaInterna
+from .models import Cliente, Pedido, OrdemDeServico, Produto, Pagamento, ContatoCliente, EtapaRelacionamento, NotaInterna, Estoque
 from .forms import (
     ClienteForm, PedidoForm, OrdemDeServicoForm, OrdemDeServicoFormSet,
-    ProdutoForm, CustoForm, PagamentoForm, ContatoClienteForm, EtapaRelacionamentoForm, NotaInternaForm
+    ProdutoForm, CustoForm, PagamentoForm, ContatoClienteForm, EtapaRelacionamentoForm, NotaInternaForm, EntradaEstoqueForm
 )
 from django.db.models import Sum
 from django.http import JsonResponse, HttpResponse
@@ -671,17 +671,4 @@ def resumo_financeiro(request):
         'produtos': Produto.objects.all()
     })
 
-class EntradaEstoque(models.Model):
-    produto = models.ForeignKey(Produto, on_delete=models.CASCADE, verbose_name="Produto")
-    cor = models.CharField(max_length=100, verbose_name="Cor do Material")
-    quantidade = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Quantidade (kg ou metro)")
-    valor_unitario = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Valor Unitário")
-    data_entrada = models.DateTimeField(default=timezone.now, verbose_name="Data de Entrada")
-
-    class Meta:
-        verbose_name = "Entrada de Estoque"
-        verbose_name_plural = "Entradas de Estoque"
-
-    def __str__(self):
-        return f"{self.quantidade} de {self.produto.nome} ({self.cor}) em {self.data_entrada.strftime('%d/%m/%Y')}"
 
