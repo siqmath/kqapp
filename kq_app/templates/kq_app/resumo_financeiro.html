@@ -8,8 +8,8 @@
         body { font-family: Arial, sans-serif; background-color: #f4f4f4; color: #333; padding: 20px; }
         h1 { color: #3D3D6A; }
         .container { background: white; padding: 20px; border-radius: 10px; max-width: 1100px; margin: auto; }
-        .btn-container { margin-bottom: 20px; }
-        .btn { padding: 10px 15px; margin-right: 10px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .btn-container { margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 10px; }
+        .btn { padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
         .btn.active { background-color: #3D3D6A; color: white; }
         .btn.inactive { background-color: #dce4f4; color: #3D3D6A; }
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
@@ -19,6 +19,8 @@
         .filter-section { margin-bottom: 20px; }
         .filter-section input, .filter-section select { padding: 5px; margin-right: 10px; }
         .menu-link { display: inline-block; margin-top: 20px; text-decoration: none; padding: 10px 20px; background: #3D3D6A; color: white; border-radius: 5px; }
+        summary { font-weight: bold; background-color: #eee; padding: 10px; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; }
+        details { margin-bottom: 15px; }
     </style>
 </head>
 <body>
@@ -44,9 +46,26 @@
             <a href="?tipo=resultado" class="btn inactive">Exportar Resultado CSV</a>
         </div>
 
-        <div id="tabela_faturamento">{{ tabela_faturamento|safe }}</div>
-        <div id="tabela_custos" class="hidden">{{ tabela_custos|safe }}</div>
-        <div id="tabela_resultado" class="hidden">{{ tabela_resultado|safe }}</div>
+        <div id="tabela_faturamento">
+            <details open>
+                <summary>Faturamento</summary>
+                {{ tabela_faturamento|safe }}
+            </details>
+        </div>
+
+        <div id="tabela_custos" class="hidden">
+            <details open>
+                <summary>Custos</summary>
+                {{ tabela_custos|safe }}
+            </details>
+        </div>
+
+        <div id="tabela_resultado" class="hidden">
+            <details open>
+                <summary>Resultado</summary>
+                {{ tabela_resultado|safe }}
+            </details>
+        </div>
 
         <a href="/" class="menu-link">Voltar ao Menu</a>
     </div>
