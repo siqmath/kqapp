@@ -136,3 +136,14 @@ class NotaInternaForm(forms.ModelForm):
             'data': forms.DateTimeInput(attrs={'type': 'datetime-local', 'class': 'form-control'}),
         }
 
+
+class EntradaEstoqueForm(forms.ModelForm):
+    class Meta:
+        model = EntradaEstoque
+        fields = ['produto', 'cor', 'quantidade', 'valor_unitario']
+        widgets = {
+            'produto': forms.Select(attrs={'class': 'form-control'}),
+            'cor': forms.TextInput(attrs={'class': 'form-control'}),
+            'quantidade': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'valor_unitario': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+        }
