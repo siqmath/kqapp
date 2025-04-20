@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Entrada de Estoque</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px; }
+        .container { max-width: 700px; margin: auto; background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h1 { color: #3D3D6A; margin-bottom: 20px; }
+        label { display: block; margin-top: 15px; font-weight: bold; }
+        input, select { width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; }
+        button { margin-top: 20px; background-color: #3D3D6A; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background-color: #2D2D4A; }
+        .success-message { color: green; margin-top: 15px; }
+        .error-message { color: red; margin-top: 15px; }
+        .menu-link { display: inline-block; margin-top: 20px; text-decoration: none; padding: 10px 20px; background: #3D3D6A; color: white; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Registrar Entrada de Estoque</h1>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="{% if message.tags %}{{ message.tags }}-message{% endif %}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+            <label for="produto">Produto:</label>
+            <select name="produto" id="produto">
+                {% for produto in produtos %}
+                    <option value="{{ produto.id }}">{{ produto.nome }}</option>
+                {% endfor %}
+            </select>
+
+            <label for="cor">Cor do Material:</label>
+            <input type="text" name="cor" id="cor" required>
+
+            <label for="quantidade">Quantidade (kg ou metro):</label>
+            <input type="number" name="quantidade" id="quantidade" step="0.01" required>
+
+            <label for="valor_unitario">Valor Unitário:</label>
+            <input type="number" name="valor_unitario" id="valor_unitario" step="0.01" required>
+
+            <button type="submit">Registrar Entrada</button>
+        </form>
+
+        <a href="/" class="menu-link">Voltar ao Menu</a>
+    </div>
+</body>
+</html>
