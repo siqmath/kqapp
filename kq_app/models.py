@@ -264,38 +264,4 @@ class EntradaEstoque(models.Model):
     def __str__(self):
         return f"{self.quantidade} de {self.produto.nome} ({self.cor}) em {self.data_entrada.strftime('%d/%m/%Y')}"
 
-class EntradaEstoqueForm(forms.ModelForm):
-    class Meta:
-        model = EntradaEstoque
-        fields = ['produto', 'cor', 'quantidade', 'valor_unitario']
-        widgets = {
-            'produto': forms.Select(attrs={'class': 'form-control'}),
-            'cor': forms.TextInput(attrs={'class': 'form-control'}),
-            'quantidade': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
-            'valor_unitario': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
-        }
-
-
-def registrar_entrada_estoque(request):
-    if request.method == 'POST':
-        form = EntradaEstoqueForm(request.POST)
-        if form.is_valid():
-            entrada = form.save()
-            estoque, criado = Estoque.objects.get_or_create(
-                produto=entrada.produto,
-                cor=entrada.cor,
-                defaults={'quantidade': entrada.quantidade}
-            )
-            if not criado:
-                estoque.quantidade += entrada.quantidade
-                estoque.save()
-
-            messages.success(request, 'Entrada de estoque registrada com sucesso!')
-            return redirect('registrar_entrada_estoque')
-        else:
-            messages.error(request, 'Erro ao registrar entrada. Verifique os dados.')
-    else:
-        form = EntradaEstoqueForm()
-
-    return render(request, 'kq_app/entrada_estoque.html', {'form': form})
 
