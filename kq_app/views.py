@@ -521,12 +521,69 @@ def atualizar_etapa_relacionamento(request, cliente_id):
             messages.success(request, 'Etapa de relacionamento atualizada.')
     return redirect('cliente_detalhes', cliente_id=cliente.id)
 
+def exportar_csv(request):
+    tipo = request.GET.get('tipo')
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="{tipo}_financeiro_kq.csv"'
+
+    writer = csv.writer(response)
+
+    if tipo == 'faturamento':
+        writer.writerow(['Pedido', 'Cliente', 'Produto', 'Data Entrega', 'Quantidade', 'Valor Unitário', 'Valor Total'])
+        for pedido in Pedido.objects.prefetch_related('ordens_de_servico').select_related('cliente'):
+            for os in pedido.ordens_de_servico.all():
+                writer.writerow([
+                    pedido.id,
+                    pedido.cliente.nome,
+                    os.produto.nome,
+                    pedido.data_entrega.strftime('%d/%m/%Y') if pedido.data_entrega else 'Não definida',
+                    os.quantidade,
+                    f"{os.preco_unitario:.2f}",
+                    f"{os.preco_unitario * os.quantidade:.2f}"
+                ])
+
+    elif tipo == 'custos':
+        writer.writerow(['Pedido', 'Cliente', 'Produto', 'Tipo de Custo', 'Valor', 'Data'])
+        for custo in Custo.objects.select_related('ordem_de_servico__pedido', 'ordem_de_servico__produto'):
+            writer.writerow([
+                custo.ordem_de_servico.pedido.id,
+                custo.ordem_de_servico.pedido.cliente.nome,
+                custo.ordem_de_servico.produto.nome,
+                custo.tipo or 'Outro',
+                f"{custo.valor:.2f}",
+                custo.data.strftime('%d/%m/%Y')
+            ])
+
+    elif tipo == 'resultado':
+        writer.writerow(['Pedido', 'Cliente', 'Produto', 'Entrega', 'Valor Total', 'Custos', 'Lucro'])
+        for pedido in Pedido.objects.prefetch_related('ordens_de_servico').select_related('cliente'):
+            subtotal = 0
+            custo_total = 0
+            produtos = []
+            for os in pedido.ordens_de_servico.all():
+                produtos.append(os.produto.nome)
+                subtotal += os.preco_unitario * os.quantidade
+                custo_total += sum(c.valor for c in Custo.objects.filter(ordem_de_servico=os))
+            writer.writerow([
+                pedido.id,
+                pedido.cliente.nome,
+                ", ".join(produtos),
+                pedido.data_entrega.strftime('%d/%m/%Y') if pedido.data_entrega else 'Não definida',
+                f"{subtotal:.2f}",
+                f"{custo_total:.2f}",
+                f"{(subtotal - custo_total):.2f}"
+            ])
+
+    return response
+
+
 def resumo_financeiro(request):
     pedidos = Pedido.objects.prefetch_related('ordens_de_servico').select_related('cliente')
 
     filtro_cliente = request.GET.get('cliente')
     filtro_data_inicio = request.GET.get('data_inicio')
     filtro_data_fim = request.GET.get('data_fim')
+    filtro_produto = request.GET.get('produto')
 
     if filtro_cliente:
         pedidos = pedidos.filter(cliente__nome__icontains=filtro_cliente)
@@ -547,6 +604,9 @@ def resumo_financeiro(request):
         custo_total = 0
 
         for os in ordens:
+            if filtro_produto and filtro_produto.lower() not in os.produto.nome.lower():
+                continue
+
             quantidade = os.quantidade
             total = os.preco_unitario * quantidade
             subtotal += total
@@ -593,43 +653,22 @@ def resumo_financeiro(request):
         """)
 
     tabela_faturamento = format_html("""
-        <table>
-            <thead>
-                <tr>
-                    <th>Pedido</th><th>Cliente</th><th>Produto</th><th>Data Entrega</th><th>Quantidade</th><th>Valor Unitário</th><th>Valor Total</th>
-                </tr>
-            </thead>
-            <tbody>
-                {} 
-            </tbody>
-        </table>
+        <tbody>{}</tbody>
     """, format_html("".join(linhas_faturamento)))
 
     tabela_custos = format_html("""
-        <table>
-            <thead>
-                <tr><th>Pedido</th><th>Cliente</th><th>Produto</th><th>Tipo de Custo</th><th>Valor</th><th>Data</th></tr>
-            </thead>
-            <tbody>
-                {} 
-            </tbody>
-        </table>
+        <tbody>{}</tbody>
     """, format_html("".join(linhas_custos)))
 
     tabela_resultado = format_html("""
-        <table>
-            <thead>
-                <tr><th>Pedido</th><th>Cliente</th><th>Produto</th><th>Entrega</th><th>Valor Total</th><th>Custos</th><th>Lucro</th></tr>
-            </thead>
-            <tbody>
-                {} 
-            </tbody>
-        </table>
+        <tbody>{}</tbody>
     """, format_html("".join(linhas_resultado)))
 
     return render(request, 'kq_app/resumo_financeiro.html', {
         'tabela_faturamento': tabela_faturamento,
         'tabela_custos': tabela_custos,
         'tabela_resultado': tabela_resultado,
+        'produtos': Produto.objects.all()
     })
+
 
