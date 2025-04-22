@@ -29,6 +29,7 @@ class Cliente(models.Model):
 
 class Pedido(models.Model):
     STATUS_CHOICES = (
+        ('novo', 'Novo')
         ('analise', 'Análise'),
         ('aprovado', 'Aprovado'),
         ('compra', 'Compra'),
