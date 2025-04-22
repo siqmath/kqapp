@@ -19,6 +19,8 @@ from django.utils.html import format_html
 from django.db import transaction
 from django.core.paginator import Paginator
 import logging
+import requests
+from io import BytesIO
 
 def home(request):
     """Página inicial."""
@@ -384,13 +386,14 @@ def gerar_folha_corte_costura(request, os_id):
     img_y = y_start - 3 * line_height - img_height  # Reduz o espaço acima da imagem
 
     if ordem_de_servico.mockup:
-        mockup_path = ordem_de_servico.mockup.path
-        try:
-            img = Image(mockup_path, width=img_width, height=img_height)
-            img.drawOn(p, img_x, img_y)
-        except Exception as e:
-            p.setFont("Helvetica", 10)
-            p.drawString(img_x, img_y, f"Erro ao carregar o mockup: {e}")
+    try:
+        response = requests.get(ordem_de_servico.mockup.url)
+        image_file = BytesIO(response.content)
+        img = RLImage(image_file, width=img_width, height=img_height)
+        img.drawOn(p, img_x, img_y)
+    except Exception as e:
+        p.setFont("Helvetica", 10)
+        p.drawString(img_x, img_y, f"Erro ao carregar o mockup: {e}")
 
     # Tabela com informações da OS
     data_tabela_os = [
