@@ -19,8 +19,10 @@ from django.utils.html import format_html
 from django.db import transaction
 from django.core.paginator import Paginator
 import logging
+import csv
 import requests
 from io import BytesIO
+
 
 def home(request):
     """Página inicial."""
@@ -150,11 +152,11 @@ def novo_pedido(request):
     else:
         pedido_form = PedidoForm()
 
-    OrdemDeServicoFormSetFactory = formset_factory(OrdemDeServicoForm, extra=1, can_delete=True)
+    OrdemDeServicoFormSet = formset_factory(OrdemDeServicoForm, extra=1, can_delete=True)
 
     if request.method == 'POST':
         pedido_form = PedidoForm(request.POST)
-        ordem_de_servico_formset = OrdemDeServicoFormSetFactory(request.POST, request.FILES, prefix='ordem_de_servico')
+        ordem_de_servico_formset = OrdemDeServicoFormSet(request.POST, request.FILES, prefix='ordem_de_servico')
 
         if pedido_form.is_valid() and ordem_de_servico_formset.is_valid():
             pedido = pedido_form.save()
@@ -193,11 +195,11 @@ def novo_pedido(request):
             return redirect('detalhes_pedido', pedido_id=pedido.id)
 
         else:
-            ordem_de_servico_formset = OrdemDeServicoFormSetFactory(request.POST, request.FILES, prefix='ordem_de_servico')
+            ordem_de_servico_formset = OrdemDeServicoFormSet(request.POST, request.FILES, prefix='ordem_de_servico')
             messages.error(request, 'Erro ao cadastrar pedido. Verifique os dados.')
 
     else:
-        ordem_de_servico_formset = OrdemDeServicoFormSetFactory(prefix='ordem_de_servico')
+        ordem_de_servico_formset = OrdemDeServicoFormSet(prefix='ordem_de_servico')
 
     context = {
         'pedido_form': pedido_form,
