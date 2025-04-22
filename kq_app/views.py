@@ -90,12 +90,7 @@ def cliente_detalhes(request, cliente_id):
         cliente = get_object_or_404(Cliente, id=cliente_id)
         contatos = ContatoCliente.objects.filter(cliente=cliente).order_by('-data_contato')
         notas = NotaInterna.objects.filter(cliente=cliente).order_by('-data')
-
-        etapa_qs = EtapaRelacionamento.objects.filter(cliente=cliente)
-        if etapa_qs.count() > 1:
-            etapa_qs.exclude(id=etapa_qs.first().id).delete()
         etapa, _ = EtapaRelacionamento.objects.get_or_create(cliente=cliente)
-
         contato_form = ContatoClienteForm()
         nota_form = NotaInternaForm()
         etapa_form = EtapaRelacionamentoForm(instance=etapa)
