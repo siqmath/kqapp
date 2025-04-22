@@ -87,22 +87,30 @@ class Produto(models.Model):
 
 
 class OrdemDeServico(models.Model):
-    pedido = models.ForeignKey(Pedido, on_delete=models.CASCADE,
-                               verbose_name="Pedido", related_name='ordens_de_servico')
+    pedido = models.ForeignKey(
+        'Pedido', on_delete=models.CASCADE, verbose_name="Pedido", related_name='ordens_de_servico'
+    )
     numero_os = models.IntegerField(
-        verbose_name="Número da OS", blank=True, null=True)
+        verbose_name="Número da OS", blank=True, null=True
+    )
     produto = models.ForeignKey(
-        Produto, on_delete=models.CASCADE, verbose_name="Produto")
+        'Produto', on_delete=models.CASCADE, verbose_name="Produto"
+    )
     preco_unitario = models.DecimalField(
-        max_digits=10, decimal_places=2, verbose_name="Preço Unitário", default=0.00)
+        max_digits=10, decimal_places=2, verbose_name="Preço Unitário", default=0.00
+    )
     observacoes = models.TextField(
-        blank=True, null=True, verbose_name="Observações", default="")
-    mockup = CloudinaryField(verbose_name="Mockup",
-                             folder='mockups', blank=True, null=True)
+        blank=True, null=True, verbose_name="Observações", default=""
+    )
+    mockup = CloudinaryField(
+        verbose_name="Mockup", folder='mockups', blank=True, null=True
+    )
     quantidade_digitada = models.IntegerField(
-        default=0, verbose_name="Quantidade Digitada")
+        default=0, verbose_name="Quantidade Digitada"
+    )
     cor_tecido = models.CharField(
-        max_length=255, verbose_name="Cor do Tecido", blank=True, null=True)  # Novo campo
+        max_length=255, verbose_name="Cor do Tecido", blank=True, null=True
+    )
 
     pp_masculino = models.IntegerField(default=0, verbose_name="PP Masculino")
     pp_feminino = models.IntegerField(default=0, verbose_name="PP Feminino")
@@ -116,9 +124,12 @@ class OrdemDeServico(models.Model):
     gg_feminino = models.IntegerField(default=0, verbose_name="GG Feminino")
     xg_masculino = models.IntegerField(default=0, verbose_name="XG Masculino")
     xg_feminino = models.IntegerField(default=0, verbose_name="XG Feminino")
-    esp_masculino = models.IntegerField(
-        default=0, verbose_name="ESP Masculino")
+    esp_masculino = models.IntegerField(default=0, verbose_name="ESP Masculino")
     esp_feminino = models.IntegerField(default=0, verbose_name="ESP Feminino")
+
+    quantidade_total = models.IntegerField(
+        default=0, verbose_name="Quantidade Total"
+    )
 
     class Meta:
         verbose_name = "Ordem de Serviço"
@@ -130,13 +141,21 @@ class OrdemDeServico(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.numero_os:
-            # Obtém o número da última OS para este pedido
             ultima_os = OrdemDeServico.objects.filter(
-                pedido=self.pedido).order_by('-numero_os').first()
-            if ultima_os:
-                self.numero_os = ultima_os.numero_os + 1
-            else:
-                self.numero_os = 1  # Primeira OS para este pedido
+                pedido=self.pedido
+            ).order_by('-numero_os').first()
+            self.numero_os = (ultima_os.numero_os + 1) if ultima_os else 1
+
+        self.quantidade_total = (
+            (self.pp_masculino or 0) + (self.pp_feminino or 0) +
+            (self.p_masculino or 0) + (self.p_feminino or 0) +
+            (self.m_masculino or 0) + (self.m_feminino or 0) +
+            (self.g_masculino or 0) + (self.g_feminino or 0) +
+            (self.gg_masculino or 0) + (self.gg_feminino or 0) +
+            (self.xg_masculino or 0) + (self.xg_feminino or 0) +
+            (self.esp_masculino or 0) + (self.esp_feminino or 0)
+        )
+
         super().save(*args, **kwargs)
 
     @property
