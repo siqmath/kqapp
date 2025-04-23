@@ -19,19 +19,7 @@
         .error-message { color: red; font-weight: bold; margin-bottom: 15px; }
         fieldset { border: 1px solid #ccc; padding: 15px; margin-bottom: 20px; }
         legend { font-weight: bold; padding: 0 10px; color: #3D3D6A; }
-        .add-os-btn { margin-bottom: 20px; }
     </style>
-    <script>
-        let formIndex = {{ ordem_de_servico_formset.total_form_count }};
-        function adicionarOrdemServico() {
-            const formContainer = document.getElementById("ordens-container");
-            const novoForm = document.getElementById("empty-form").innerHTML.replace(/__prefix__/g, formIndex);
-            const fieldset = document.createElement("fieldset");
-            fieldset.innerHTML = `<legend>Produto ${formIndex + 1}</legend>` + novoForm;
-            formContainer.appendChild(fieldset);
-            document.getElementById("id_ordem_de_servico-TOTAL_FORMS").value = ++formIndex;
-        }
-    </script>
 </head>
 <body>
 <header>
@@ -70,36 +58,23 @@
             <h2>Ordens de Serviço</h2>
             {{ ordem_de_servico_formset.management_form }}
 
-            {% if ordem_de_servico_formset.non_form_errors %}
-                <div class="error-message">{{ ordem_de_servico_formset.non_form_errors }}</div>
-            {% endif %}
-
-            <div id="ordens-container">
-                {% for form in ordem_de_servico_formset %}
-                    <fieldset>
-                        <legend>Produto {{ forloop.counter }}</legend>
-                        {% if form.non_field_errors %}<div class="error-message">{{ form.non_field_errors }}</div>{% endif %}
-                        {% for field in form.visible_fields %}
-                            <div class="form-group">
-                                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-                                {{ field }}
-                                {% if field.errors %}<div class="error-message">{{ field.errors }}</div>{% endif %}
-                            </div>
-                        {% endfor %}
-                    </fieldset>
-                {% endfor %}
-            </div>
-
-            <button type="button" class="button add-os-btn" onclick="adicionarOrdemServico()">Adicionar Produto</button>
+            {% for form in ordem_de_servico_formset %}
+                <fieldset>
+                    <legend>Produto {{ forloop.counter }}</legend>
+                    {% for field in form.visible_fields %}
+                        <div class="form-group">
+                            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.errors %}<div class="error-message">{{ field.errors }}</div>{% endif %}
+                        </div>
+                    {% endfor %}
+                </fieldset>
+            {% endfor %}
         </div>
 
         <button type="submit" class="button">Salvar Pedido</button>
         <a href="{% url 'home' %}" class="button" style="background-color: #e67e22;">Cancelar</a>
     </form>
-
-    <template id="empty-form">
-        {{ ordem_de_servico_formset.empty_form.as_p|safe }}
-    </template>
 </div>
 </body>
 </html>
