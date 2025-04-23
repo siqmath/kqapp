@@ -25,6 +25,7 @@ from io import BytesIO
 from reportlab.platypus import Image as RLImage
 
 
+
 def home(request):
     """Página inicial."""
     return render(request, 'kq_app/home.html')
