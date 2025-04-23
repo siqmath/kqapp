@@ -132,37 +132,37 @@
 
     <h2>Produtos Registrados</h2>
     <table>
-        <thead>
+       <thead>
             <tr>
                 <th>ID</th>
                 <th>Nome</th>
                 <th>Material</th>
                 <th>Rendimento</th>
-                <th>Unidade</th>
-                <th>Preço Costura</th>
+                <th>Unidade de Medida</th>
+                <th>Preço de Costura</th>
                 <th>% Comissão</th>
                 <th>Ações</th>
             </tr>
         </thead>
-        <tbody>
-            {% for produto in produtos %}
-                <tr>
-                    <td>{{ produto.id }}</td>
-                    <td>{{ produto.nome }}</td>
-                    <td>{{ produto.material }}</td>
-                    <td>{{ produto.rendimento }}</td>
-                    <td>{{ produto.unidade_medida }}</td>
-                    <td>R$ {{ produto.preco_costura }}</td>
-                    <td>{{ produto.percentual_comissao }}%</td>
-                    <td class="actions">
-                        <form action="{% url 'excluir_produto' produto.id %}" method="POST">
-                            {% csrf_token %}
-                            <button type="submit" class="button delete-button">Excluir</button>
-                        </form>
-                    </td>
-                </tr>
-            {% endfor %}
-        </tbody>
+<tbody>
+    {% for produto in produtos %}
+        <tr>
+            <td>{{ produto.id }}</td>
+            <td>{{ produto.nome }}</td>
+            <td>{{ produto.material }}</td>
+            <td>{{ produto.rendimento }}</td>
+            <td>{{ produto.unidade_medida }}</td>
+            <td>{{ produto.preco_costura }}</td>
+            <td>{{ produto.percentual_comissao }}</td>
+            <td class="actions">
+                <form action="{% url 'excluir_produto' produto.id %}" method="POST">
+                    {% csrf_token %}
+                    <button type="submit" class="button delete-button">Excluir</button>
+                </form>
+            </td>
+        </tr>
+    {% endfor %}
+</tbody>
     </table>
 </div>
 
