@@ -305,17 +305,27 @@ def corteecostura(request):
 
 
 def gerenciar_produtos(request):
-    """Gerencia os produtos (adicionar, editar, excluir)."""
-    if request.method == 'POST':
-        form = ProdutoForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('gerenciar_produtos')
-    else:
-        form = ProdutoForm()
+    try:
+        if request.method == 'POST':
+            form = ProdutoForm(request.POST)
+            if form.is_valid():
+                form.save()
+                return redirect('gerenciar_produtos')
+        else:
+            form = ProdutoForm()
 
-    produtos = Produto.objects.all()
-    return render(request, 'kq_app/gerenciar_produtos.html', {'produtos': produtos, 'form': form})
+        produtos = Produto.objects.all()
+
+        return render(request, 'kq_app/gerenciar_produtos.html', {
+            'form': form,
+            'produtos': produtos,
+        })
+
+    except Exception as e:
+        import traceback
+        return HttpResponseServerError(
+            f"<h1>Erro interno</h1><pre>{traceback.format_exc()}</pre>"
+        )
 
 
 def excluir_produto(request, produto_id):
