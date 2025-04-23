@@ -19,11 +19,11 @@ from django.utils.html import format_html
 from django.db import transaction
 from django.core.paginator import Paginator
 import logging
+logger = logging.getLogger(__name__)
 import csv
 import requests
 from io import BytesIO
 from reportlab.platypus import Image as RLImage
-
 
 
 def home(request):
@@ -91,6 +91,7 @@ def cadastrar_cliente(request):
     }
     return render(request, 'kq_app/cadastrar_cliente.html', context)
 
+
 def cliente_detalhes(request, cliente_id):
     try:
         cliente = get_object_or_404(Cliente, id=cliente_id)
@@ -126,8 +127,6 @@ def cliente_detalhes(request, cliente_id):
                     etapa_form.save()
                     messages.success(request, 'Etapa de relacionamento atualizada.')
                     return redirect('cliente_detalhes', cliente_id=cliente.id)
-
-    logger = logging.getLogger(__name__)
 
 
 def novo_pedido(request):
