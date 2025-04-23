@@ -129,102 +129,74 @@ def cliente_detalhes(request, cliente_id):
                     return redirect('cliente_detalhes', cliente_id=cliente.id)
                     
 def novo_pedido(request):
-    try:
-        produtos = Produto.objects.all()
-        busca = request.GET.get('busca', '')
+    produtos = Produto.objects.all()
+    busca = request.GET.get('busca', '')
 
-        if busca:
-            clientes_filtrados = Cliente.objects.filter(nome__icontains=busca)
-            pedido_form = PedidoForm()
-            pedido_form.fields['cliente'].queryset = clientes_filtrados
+    # Filtra os clientes, se houver busca por nome
+    if busca:
+        clientes_filtrados = Cliente.objects.filter(nome__icontains=busca)
+        pedido_form = PedidoForm()
+        pedido_form.fields['cliente'].queryset = clientes_filtrados
+    else:
+        pedido_form = PedidoForm()
+
+    OrdemDeServicoFormSetFactory = formset_factory(OrdemDeServicoForm, extra=1, can_delete=True)
+
+    if request.method == 'POST':
+        pedido_form = PedidoForm(request.POST)
+        ordem_de_servico_formset = OrdemDeServicoFormSetFactory(request.POST, request.FILES, prefix='ordem_de_servico')
+
+        if pedido_form.is_valid() and ordem_de_servico_formset.is_valid():
+            pedido = pedido_form.save()
+            valor_total = 0
+
+            for form in ordem_de_servico_formset:
+                if form.has_changed():
+                    os = form.save(commit=False)
+
+                    soma_tamanhos = (
+                        (os.pp_masculino or 0) + (os.pp_feminino or 0) +
+                        (os.p_masculino or 0) + (os.p_feminino or 0) +
+                        (os.m_masculino or 0) + (os.m_feminino or 0) +
+                        (os.g_masculino or 0) + (os.g_feminino or 0) +
+                        (os.gg_masculino or 0) + (os.gg_feminino or 0) +
+                        (os.xg_masculino or 0) + (os.xg_feminino or 0) +
+                        (os.esp_masculino or 0) + (os.esp_feminino or 0)
+                    )
+
+                    if os.quantidade_digitada != soma_tamanhos:
+                        context = {
+                            'pedido_form': pedido_form,
+                            'ordem_de_servico_formset': ordem_de_servico_formset,
+                            'produtos': produtos,
+                            'mensagem_erro': 'Quantidade diferente da soma da grade de tamanhos.'
+                        }
+                        return render(request, 'kq_app/novo_pedido.html', context)
+
+                    os.pedido = pedido
+                    os.save()
+                    valor_total += os.preco_unitario * os.quantidade
+
+            pedido.valor_total = valor_total + pedido_form.cleaned_data.get('frete', 0)
+            pedido.save()
+
+            return redirect('detalhes_pedido', pedido_id=pedido.id)
+
         else:
-            pedido_form = PedidoForm()
+            ordem_de_servico_formset = OrdemDeServicoFormSetFactory(request.POST, request.FILES, prefix='ordem_de_servico')
+            messages.error(request, 'Erro ao cadastrar pedido. Verifique os dados.')
 
-        OrdemDeServicoFormSet = formset_factory(OrdemDeServicoForm, extra=1, can_delete=True)
+    else:
+        ordem_de_servico_formset = OrdemDeServicoFormSetFactory(prefix='ordem_de_servico')
 
-        if request.method == 'POST':
-            logger.info("DADOS POST RECEBIDOS:")
-            logger.info(request.POST)
-            logger.info("FILES RECEBIDOS:")
-            logger.info(request.FILES)
-
-            pedido_form = PedidoForm(request.POST)
-            ordem_de_servico_formset = OrdemDeServicoFormSet(request.POST, request.FILES, prefix='ordem_de_servico')
-
-            if pedido_form.is_valid() and ordem_de_servico_formset.is_valid():
-                try:
-                    with transaction.atomic():
-                        pedido = pedido_form.save()
-                        valor_total = 0
-
-                        for form in ordem_de_servico_formset:
-                            if form.has_changed():
-                                try:
-                                    ordem = form.save(commit=False)
-                                except Exception as e:
-                                    logger.error(f'Erro ao salvar form de Ordem de Serviço: {e}', exc_info=True)
-                                    messages.error(request, f'Erro técnico ao salvar uma Ordem de Serviço: {e}')
-                                    return render(request, 'kq_app/novo_pedido.html', {
-                                        'pedido_form': pedido_form,
-                                        'ordem_de_servico_formset': ordem_de_servico_formset,
-                                        'produtos': produtos,
-                                        'mensagem_erro': f'Erro técnico: {e}'
-                                    })
-
-                                soma_tamanhos = (
-                                    (ordem.pp_masculino or 0) + (ordem.pp_feminino or 0) +
-                                    (ordem.p_masculino or 0) + (ordem.p_feminino or 0) +
-                                    (ordem.m_masculino or 0) + (ordem.m_feminino or 0) +
-                                    (ordem.g_masculino or 0) + (ordem.g_feminino or 0) +
-                                    (ordem.gg_masculino or 0) + (ordem.gg_feminino or 0) +
-                                    (ordem.xg_masculino or 0) + (ordem.xg_feminino or 0) +
-                                    (ordem.esp_masculino or 0) + (ordem.esp_feminino or 0)
-                                )
-
-                                if form.cleaned_data.get('quantidade_digitada', 0) != soma_tamanhos:
-                                    context = {
-                                        'pedido_form': pedido_form,
-                                        'ordem_de_servico_formset': ordem_de_servico_formset,
-                                        'produtos': produtos,
-                                        'mensagem_erro': 'Quantidade diferente da soma da grade de tamanhos.'
-                                    }
-                                    return render(request, 'kq_app/novo_pedido.html', context)
-
-                                ordem.pedido = pedido
-                                ordem.save()
-                                valor_total += ordem.preco_unitario * ordem.quantidade
-
-                        pedido.valor_total = valor_total + pedido_form.cleaned_data.get('frete', 0)
-                        pedido.save()
-                        return redirect('detalhes_pedido', pedido_id=pedido.id)
-
-                except Exception as e:
-                    logger.error(f"Erro inesperado ao salvar novo pedido: {e}", exc_info=True)
-                    messages.error(request, f"Erro inesperado ao salvar novo pedido: {e}")
-                    return render(request, 'kq_app/novo_pedido.html', {
-                        'pedido_form': pedido_form,
-                        'ordem_de_servico_formset': ordem_de_servico_formset,
-                        'produtos': produtos,
-                        'mensagem_erro': f'Erro inesperado: {e}'
-                    })
-
-            else:
-                messages.error(request, 'Erro ao cadastrar pedido. Verifique os dados.')
-        else:
-            ordem_de_servico_formset = OrdemDeServicoFormSet(prefix='ordem_de_servico')
-
-        context = {
-            'pedido_form': pedido_form,
-            'ordem_de_servico_formset': ordem_de_servico_formset,
-            'produtos': produtos,
-            'mensagem_erro': None
-        }
-        return render(request, 'kq_app/novo_pedido.html', context)
-
-    except Exception as e:
-        logger.error(f"ERRO AO CARREGAR PÁGINA novo_pedido: {e}", exc_info=True)
-        return render(request, 'kq_app/erro.html', {'mensagem': f'Erro interno ao carregar a página: {e}'})
-        
+    context = {
+        'pedido_form': pedido_form,
+        'ordem_de_servico_formset': ordem_de_servico_formset,
+        'produtos': produtos,
+        'mensagem_erro': None
+    }
+    return render(request, 'kq_app/novo_pedido.html', context)
+    
 
 def detalhes_pedido(request, pedido_id):
     try:
