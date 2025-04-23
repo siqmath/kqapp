@@ -60,12 +60,14 @@ OrdemDeServicoFormSet = formset_factory(OrdemDeServicoForm, extra=1, can_delete=
 class ProdutoForm(forms.ModelForm):
     class Meta:
         model = Produto
-        fields = ['nome', 'material', 'rendimento', 'unidade_medida']
+        fields = ['nome', 'material', 'rendimento', 'unidade_medida', 'preco_costura', 'percentual_comissao']
         widgets = {
             'nome': forms.TextInput(attrs={'class': 'form-control'}),
             'material': forms.TextInput(attrs={'class': 'form-control'}),
             'rendimento': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
             'unidade_medida': forms.Select(attrs={'class': 'form-control'}),
+            'preco_costura': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'percentual_comissao': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
         }
 
 class CustoForm(forms.ModelForm):
