@@ -142,6 +142,8 @@ def cliente_detalhes(request, cliente_id):
         logging.error(f"Erro na view cliente_detalhes para cliente_id={cliente_id}: {e}", exc_info=True)
         return HttpResponse(f"Erro interno ao carregar cliente {cliente_id}: {e}", status=500)
 
+logger = logging.getLogger(__name__)
+
 def novo_pedido(request):
     produtos = Produto.objects.all()
     busca = request.GET.get('busca', '')
@@ -156,42 +158,71 @@ def novo_pedido(request):
     OrdemDeServicoFormSet = formset_factory(OrdemDeServicoForm, extra=1, can_delete=True)
 
     if request.method == 'POST':
+        logger.info("DADOS POST RECEBIDOS:")
+        logger.info(request.POST)
+        logger.info("FILES RECEBIDOS:")
+        logger.info(request.FILES)
+
         pedido_form = PedidoForm(request.POST)
         ordem_de_servico_formset = OrdemDeServicoFormSet(request.POST, request.FILES, prefix='ordem_de_servico')
 
         if pedido_form.is_valid() and ordem_de_servico_formset.is_valid():
-            with transaction.atomic():
-                pedido = pedido_form.save()
-                valor_total = 0
+            try:
+                with transaction.atomic():
+                    pedido = pedido_form.save()
+                    valor_total = 0
 
-                for form in ordem_de_servico_formset:
-                    if form.has_changed():
-                        ordem = form.save(commit=False)
-                        soma_tamanhos = (
-                            (ordem.pp_masculino or 0) + (ordem.pp_feminino or 0) +
-                            (ordem.p_masculino or 0) + (ordem.p_feminino or 0) +
-                            (ordem.m_masculino or 0) + (ordem.m_feminino or 0) +
-                            (ordem.g_masculino or 0) + (ordem.g_feminino or 0) +
-                            (ordem.gg_masculino or 0) + (ordem.gg_feminino or 0) +
-                            (ordem.xg_masculino or 0) + (ordem.xg_feminino or 0) +
-                            (ordem.esp_masculino or 0) + (ordem.esp_feminino or 0)
-                        )
-                        if form.cleaned_data.get('quantidade_digitada', 0) != soma_tamanhos:
-                            context = {
-                                'pedido_form': pedido_form,
-                                'ordem_de_servico_formset': ordem_de_servico_formset,
-                                'produtos': produtos,
-                                'mensagem_erro': 'Quantidade diferente da soma da grade de tamanhos.'
-                            }
-                            return render(request, 'kq_app/novo_pedido.html', context)
+                    for form in ordem_de_servico_formset:
+                        if form.has_changed():
+                            try:
+                                ordem = form.save(commit=False)
+                            except Exception as e:
+                                logger.error(f'Erro ao salvar form de Ordem de Servi\u00e7o: {e}', exc_info=True)
+                                messages.error(request, f'Erro t\u00e9cnico ao salvar uma Ordem de Servi\u00e7o: {e}')
+                                return render(request, 'kq_app/novo_pedido.html', {
+                                    'pedido_form': pedido_form,
+                                    'ordem_de_servico_formset': ordem_de_servico_formset,
+                                    'produtos': produtos,
+                                    'mensagem_erro': f'Erro t\u00e9cnico: {e}'
+                                })
 
-                        ordem.pedido = pedido
-                        ordem.save()
-                        valor_total += ordem.preco_unitario * ordem.quantidade
+                            soma_tamanhos = (
+                                (ordem.pp_masculino or 0) + (ordem.pp_feminino or 0) +
+                                (ordem.p_masculino or 0) + (ordem.p_feminino or 0) +
+                                (ordem.m_masculino or 0) + (ordem.m_feminino or 0) +
+                                (ordem.g_masculino or 0) + (ordem.g_feminino or 0) +
+                                (ordem.gg_masculino or 0) + (ordem.gg_feminino or 0) +
+                                (ordem.xg_masculino or 0) + (ordem.xg_feminino or 0) +
+                                (ordem.esp_masculino or 0) + (ordem.esp_feminino or 0)
+                            )
 
-                pedido.valor_total = valor_total + pedido_form.cleaned_data.get('frete', 0)
-                pedido.save()
-                return redirect('detalhes_pedido', pedido_id=pedido.id)
+                            if form.cleaned_data.get('quantidade_digitada', 0) != soma_tamanhos:
+                                context = {
+                                    'pedido_form': pedido_form,
+                                    'ordem_de_servico_formset': ordem_de_servico_formset,
+                                    'produtos': produtos,
+                                    'mensagem_erro': 'Quantidade diferente da soma da grade de tamanhos.'
+                                }
+                                return render(request, 'kq_app/novo_pedido.html', context)
+
+                            ordem.pedido = pedido
+                            ordem.save()
+                            valor_total += ordem.preco_unitario * ordem.quantidade
+
+                    pedido.valor_total = valor_total + pedido_form.cleaned_data.get('frete', 0)
+                    pedido.save()
+                    return redirect('detalhes_pedido', pedido_id=pedido.id)
+
+            except Exception as e:
+                logger.error(f"Erro inesperado ao salvar novo pedido: {e}", exc_info=True)
+                messages.error(request, f"Erro inesperado ao salvar novo pedido: {e}")
+                return render(request, 'kq_app/novo_pedido.html', {
+                    'pedido_form': pedido_form,
+                    'ordem_de_servico_formset': ordem_de_servico_formset,
+                    'produtos': produtos,
+                    'mensagem_erro': f'Erro inesperado: {e}'
+                })
+
         else:
             messages.error(request, 'Erro ao cadastrar pedido. Verifique os dados.')
     else:
@@ -204,6 +235,7 @@ def novo_pedido(request):
         'mensagem_erro': None
     }
     return render(request, 'kq_app/novo_pedido.html', context)
+    
 
 def detalhes_pedido(request, pedido_id):
     try:
