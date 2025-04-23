@@ -19,7 +19,7 @@
             text-align: center;
         }
         .container {
-            max-width: 600px;
+            max-width: 800px;
             margin: 20px auto;
             padding: 20px;
             background-color: white;
@@ -39,19 +39,17 @@
             padding: 10px;
             border: 1px solid #ccc;
             border-radius: 4px;
-            box-sizing: border-box; /* Garante que o padding não aumente a largura */
+            box-sizing: border-box;
         }
         .button {
-            display: inline-block;
             background-color: #3D3D6A;
             color: white;
             padding: 10px 20px;
-            text-decoration: none;
             border: none;
             border-radius: 5px;
-            transition: background-color 0.3s;
             font-size: 16px;
             cursor: pointer;
+            transition: background-color 0.3s;
         }
         .button:hover {
             background-color: #2D2D4A;
@@ -59,16 +57,14 @@
         .button-center {
             display: block;
             margin: 20px auto;
-            width: fit-content;
-            text-align: center; /* Centraliza o texto dentro do botão */
+            text-align: center;
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 20px;
+            margin-top: 30px;
         }
-        th,
-        td {
+        th, td {
             border: 1px solid #ccc;
             padding: 10px;
             text-align: center;
@@ -84,8 +80,8 @@
         }
         .actions {
             display: flex;
-            justify-content: center; /* Alinha os botões horizontalmente */
-            gap: 5px; /* Espaçamento entre os botões */
+            justify-content: center;
+            gap: 5px;
         }
     </style>
 </head>
@@ -118,11 +114,12 @@
             <label for="{{ form.unidade_medida.id_for_label }}">Unidade de Medida:</label>
             {{ form.unidade_medida }}
         </div>
+
         <div class="form-group">
             <label for="{{ form.preco_costura.id_for_label }}">Preço de Costura:</label>
             {{ form.preco_costura }}
         </div>
-        
+
         <div class="form-group">
             <label for="{{ form.percentual_comissao.id_for_label }}">% Comissão:</label>
             {{ form.percentual_comissao }}
@@ -141,7 +138,9 @@
                 <th>Nome</th>
                 <th>Material</th>
                 <th>Rendimento</th>
-                <th>Unidade de Medida</th>
+                <th>Unidade</th>
+                <th>Preço Costura</th>
+                <th>% Comissão</th>
                 <th>Ações</th>
             </tr>
         </thead>
@@ -153,8 +152,8 @@
                     <td>{{ produto.material }}</td>
                     <td>{{ produto.rendimento }}</td>
                     <td>{{ produto.unidade_medida }}</td>
-                    <td>{{ produto.preco_costura }}</td>
-                    <td>{{ produto.percentual_comissao }}</td>
+                    <td>R$ {{ produto.preco_costura }}</td>
+                    <td>{{ produto.percentual_comissao }}%</td>
                     <td class="actions">
                         <form action="{% url 'excluir_produto' produto.id %}" method="POST">
                             {% csrf_token %}
