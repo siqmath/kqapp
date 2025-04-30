@@ -4,7 +4,7 @@ from django.forms import formset_factory
 from .models import Cliente, Pedido, OrdemDeServico, Produto, Pagamento, ContatoCliente, EtapaRelacionamento, NotaInterna, Estoque
 from .forms import (
     ClienteForm, PedidoForm, OrdemDeServicoForm, OrdemDeServicoFormSet,
-    ProdutoForm, CustoForm, PagamentoForm, ContatoClienteForm, EtapaRelacionamentoForm, NotaInternaForm, EntradaEstoqueForm
+    ProdutoForm, CustoForm, PagamentoForm, ContatoClienteForm, EtapaRelacionamentoForm, NotaInternaForm, EntradaEstoqueForm, ItemPedidoFormset
 )
 from django.db.models import Sum
 from django.http import JsonResponse, HttpResponse
@@ -143,8 +143,18 @@ def novo_pedido(request):
     OrdemDeServicoFormSetFactory = formset_factory(OrdemDeServicoForm, extra=1, can_delete=True)
 
     if request.method == 'POST':
-        pedido_form = PedidoForm(request.POST)
-        ordem_de_servico_formset = OrdemDeServicoFormSetFactory(request.POST, request.FILES, prefix='ordem_de_servico')
+        form = PedidoForm(request.POST)
+        formset = ItemPedidoFormSet(request.POST)
+        if form.is_valid() and formset.is_valid():
+            pedido = form.save()
+            formset.instance = pedido  # associa itens ao pedido
+            formset.save()
+            return redirect('nome-da-url-de-lista')  # redireciona após salvar
+    else:
+        form = PedidoForm()
+        formset = ItemPedidoFormSet()  # formset vazio para novos itens
+    contexto = {'form': form, 'formset': formset}
+    return render(request, 'pedidos/novo_pedido.html', contexto)
 
         if pedido_form.is_valid() and ordem_de_servico_formset.is_valid():
             pedido = pedido_form.save()
