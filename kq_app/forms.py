@@ -2,8 +2,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 from django.forms import formset_factory
-from .models import Cliente, Pedido, OrdemDeServico, Produto, Custo, Pagamento, ContatoCliente, EtapaRelacionamento, NotaInterna
-import re
+from .models import Cliente, Pedido, OrdemDeServico, Produto, Custo, Pagamento, ContatoCliente, EtapaRelacionamento, NotaInterna, EntradaEstoque
 
 class ClienteForm(forms.ModelForm):
     class Meta:
@@ -61,12 +60,14 @@ OrdemDeServicoFormSet = formset_factory(OrdemDeServicoForm, extra=1, can_delete=
 class ProdutoForm(forms.ModelForm):
     class Meta:
         model = Produto
-        fields = ['nome', 'material', 'rendimento', 'unidade_medida']
+        fields = ['nome', 'material', 'rendimento', 'unidade_medida', 'preco_costura', 'percentual_comissao']
         widgets = {
             'nome': forms.TextInput(attrs={'class': 'form-control'}),
             'material': forms.TextInput(attrs={'class': 'form-control'}),
             'rendimento': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
             'unidade_medida': forms.Select(attrs={'class': 'form-control'}),
+            'preco_costura': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'percentual_comissao': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
         }
 
 class CustoForm(forms.ModelForm):
@@ -136,3 +137,14 @@ class NotaInternaForm(forms.ModelForm):
             'data': forms.DateTimeInput(attrs={'type': 'datetime-local', 'class': 'form-control'}),
         }
 
+
+class EntradaEstoqueForm(forms.ModelForm):
+    class Meta:
+        model = EntradaEstoque
+        fields = ['produto', 'cor', 'quantidade', 'valor_unitario']
+        widgets = {
+            'produto': forms.Select(attrs={'class': 'form-control'}),
+            'cor': forms.TextInput(attrs={'class': 'form-control'}),
+            'quantidade': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'valor_unitario': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+        }

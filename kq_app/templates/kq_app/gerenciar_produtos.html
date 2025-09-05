@@ -2,159 +2,30 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerenciar Produtos - Sistema KQ</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            color: #333;
-            margin: 0;
-            padding: 0;
-        }
-        header {
-            background-color: #3D3D6A;
-            color: white;
-            padding: 20px;
-            text-align: center;
-        }
-        .container {
-            max-width: 600px;
-            margin: 20px auto;
-            padding: 20px;
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-        }
-        .form-group input,
-        .form-group select {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            box-sizing: border-box; /* Garante que o padding não aumente a largura */
-        }
-        .button {
-            display: inline-block;
-            background-color: #3D3D6A;
-            color: white;
-            padding: 10px 20px;
-            text-decoration: none;
-            border: none;
-            border-radius: 5px;
-            transition: background-color 0.3s;
-            font-size: 16px;
-            cursor: pointer;
-        }
-        .button:hover {
-            background-color: #2D2D4A;
-        }
-        .button-center {
-            display: block;
-            margin: 20px auto;
-            width: fit-content;
-            text-align: center; /* Centraliza o texto dentro do botão */
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        th,
-        td {
-            border: 1px solid #ccc;
-            padding: 10px;
-            text-align: center;
-        }
-        th {
-            background-color: #f0f0f0;
-        }
-        .delete-button {
-            background-color: #c0392b;
-        }
-        .delete-button:hover {
-            background-color: #943126;
-        }
-        .actions {
-            display: flex;
-            justify-content: center; /* Alinha os botões horizontalmente */
-            gap: 5px; /* Espaçamento entre os botões */
-        }
-    </style>
+    <title>Teste - Gerenciar Produtos</title>
 </head>
 <body>
+    <h1>Teste de Renderização da Página</h1>
 
-<header>
-    <h1>Gerenciar Produtos</h1>
-</header>
-
-<div class="container">
-    <form action="{% url 'gerenciar_produtos' %}" method="POST">
+    <h2>Formulário</h2>
+    <form method="POST">
         {% csrf_token %}
-
-        <div class="form-group">
-            <label for="{{ form.nome.id_for_label }}">Nome:</label>
-            {{ form.nome }}
-        </div>
-
-        <div class="form-group">
-            <label for="{{ form.material.id_for_label }}">Material:</label>
-            {{ form.material }}
-        </div>
-
-        <div class="form-group">
-            <label for="{{ form.rendimento.id_for_label }}">Rendimento:</label>
-            {{ form.rendimento }}
-        </div>
-
-        <div class="form-group">
-            <label for="{{ form.unidade_medida.id_for_label }}">Unidade de Medida:</label>
-            {{ form.unidade_medida }}
-        </div>
-
-        <button type="submit" class="button">Cadastrar Produto</button>
+        {{ form.as_p }}
+        <button type="submit">Salvar</button>
     </form>
 
-    <a href="{% url 'home' %}" class="button button-center">Voltar para Home</a>
+    <h2>Lista de Produtos</h2>
+    <ul>
+        {% for produto in produtos %}
+            <li>
+                {{ produto.nome }} - {{ produto.material }} - {{ produto.rendimento }}
+                - {{ produto.unidade_medida }} - {{ produto.preco_costura }} - {{ produto.percentual_comissao }}
+            </li>
+        {% empty %}
+            <li>Nenhum produto encontrado.</li>
+        {% endfor %}
+    </ul>
 
-    <h2>Produtos Registrados</h2>
-    <table>
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Nome</th>
-                <th>Material</th>
-                <th>Rendimento</th>
-                <th>Unidade de Medida</th>
-                <th>Ações</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for produto in produtos %}
-                <tr>
-                    <td>{{ produto.id }}</td>
-                    <td>{{ produto.nome }}</td>
-                    <td>{{ produto.material }}</td>
-                    <td>{{ produto.rendimento }}</td>
-                    <td>{{ produto.unidade_medida }}</td>
-                    <td class="actions">
-                        <form action="{% url 'excluir_produto' produto.id %}" method="POST">
-                            {% csrf_token %}
-                            <button type="submit" class="button delete-button">Excluir</button>
-                        </form>
-                    </td>
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
-
+    <a href="{% url 'home' %}">Voltar para a Home</a>
 </body>
 </html>

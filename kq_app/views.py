@@ -1,10 +1,10 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.forms import formset_factory
-from .models import Cliente, Pedido, OrdemDeServico, Produto, Pagamento, ContatoCliente, EtapaRelacionamento, NotaInterna
+from .models import Cliente, Pedido, OrdemDeServico, Produto, Pagamento, ContatoCliente, EtapaRelacionamento, NotaInterna, Estoque
 from .forms import (
     ClienteForm, PedidoForm, OrdemDeServicoForm, OrdemDeServicoFormSet,
-    ProdutoForm, CustoForm, PagamentoForm, ContatoClienteForm, EtapaRelacionamentoForm, NotaInternaForm
+    ProdutoForm, CustoForm, PagamentoForm, ContatoClienteForm, EtapaRelacionamentoForm, NotaInternaForm, EntradaEstoqueForm, ItemPedidoFormset
 )
 from django.db.models import Sum
 from django.http import JsonResponse, HttpResponse
@@ -15,9 +15,16 @@ from reportlab.lib import colors
 from reportlab.lib.units import inch
 from reportlab.lib.styles import getSampleStyleSheet
 from .utils import gerar_contrato_pdf, enviar_contrato_email
+from django.utils.html import format_html
 from django.db import transaction
 from django.core.paginator import Paginator
 import logging
+logger = logging.getLogger(__name__)
+import csv
+import requests
+from io import BytesIO
+from reportlab.platypus import Image as RLImage
+
 
 def home(request):
     """Página inicial."""
@@ -84,17 +91,13 @@ def cadastrar_cliente(request):
     }
     return render(request, 'kq_app/cadastrar_cliente.html', context)
 
+
 def cliente_detalhes(request, cliente_id):
     try:
         cliente = get_object_or_404(Cliente, id=cliente_id)
         contatos = ContatoCliente.objects.filter(cliente=cliente).order_by('-data_contato')
         notas = NotaInterna.objects.filter(cliente=cliente).order_by('-data')
-
-        etapa_qs = EtapaRelacionamento.objects.filter(cliente=cliente)
-        if etapa_qs.count() > 1:
-            etapa_qs.exclude(id=etapa_qs.first().id).delete()
         etapa, _ = EtapaRelacionamento.objects.get_or_create(cliente=cliente)
-
         contato_form = ContatoClienteForm()
         nota_form = NotaInternaForm()
         etapa_form = EtapaRelacionamentoForm(instance=etapa)
@@ -124,22 +127,7 @@ def cliente_detalhes(request, cliente_id):
                     etapa_form.save()
                     messages.success(request, 'Etapa de relacionamento atualizada.')
                     return redirect('cliente_detalhes', cliente_id=cliente.id)
-
-        context = {
-            'cliente': cliente,
-            'contatos': contatos,
-            'notas': notas,
-            'etapa': etapa,
-            'contato_form': contato_form,
-            'nota_form': nota_form,
-            'etapa_form': etapa_form,
-        }
-        return render(request, 'kq_app/cliente_detalhes.html', context)
-
-    except Exception as e:
-        logging.error(f"Erro na view cliente_detalhes para cliente_id={cliente_id}: {e}", exc_info=True)
-        return HttpResponse(f"Erro interno ao carregar cliente {cliente_id}: {e}", status=500)
-
+                    
 def novo_pedido(request):
     produtos = Produto.objects.all()
     busca = request.GET.get('busca', '')
@@ -155,8 +143,18 @@ def novo_pedido(request):
     OrdemDeServicoFormSetFactory = formset_factory(OrdemDeServicoForm, extra=1, can_delete=True)
 
     if request.method == 'POST':
-        pedido_form = PedidoForm(request.POST)
-        ordem_de_servico_formset = OrdemDeServicoFormSetFactory(request.POST, request.FILES, prefix='ordem_de_servico')
+        form = PedidoForm(request.POST)
+        formset = ItemPedidoFormSet(request.POST)
+        if form.is_valid() and formset.is_valid():
+            pedido = form.save()
+            formset.instance = pedido  # associa itens ao pedido
+            formset.save()
+            return redirect('nome-da-url-de-lista')  # redireciona após salvar
+    else:
+        form = PedidoForm()
+        formset = ItemPedidoFormSet()  # formset vazio para novos itens
+    contexto = {'form': form, 'formset': formset}
+    return render(request, 'pedidos/novo_pedido.html', contexto)
 
         if pedido_form.is_valid() and ordem_de_servico_formset.is_valid():
             pedido = pedido_form.save()
@@ -208,6 +206,7 @@ def novo_pedido(request):
         'mensagem_erro': None
     }
     return render(request, 'kq_app/novo_pedido.html', context)
+    
 
 def detalhes_pedido(request, pedido_id):
     try:
@@ -303,17 +302,27 @@ def corteecostura(request):
 
 
 def gerenciar_produtos(request):
-    """Gerencia os produtos (adicionar, editar, excluir)."""
-    if request.method == 'POST':
-        form = ProdutoForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('gerenciar_produtos')
-    else:
-        form = ProdutoForm()
+    try:
+        if request.method == 'POST':
+            form = ProdutoForm(request.POST)
+            if form.is_valid():
+                form.save()
+                return redirect('gerenciar_produtos')
+        else:
+            form = ProdutoForm()
 
-    produtos = Produto.objects.all()
-    return render(request, 'kq_app/gerenciar_produtos.html', {'produtos': produtos, 'form': form})
+        produtos = Produto.objects.all()
+
+        return render(request, 'kq_app/gerenciar_produtos.html', {
+            'form': form,
+            'produtos': produtos,
+        })
+
+    except Exception as e:
+        import traceback
+        return HttpResponseServerError(
+            f"<h1>Erro interno</h1><pre>{traceback.format_exc()}</pre>"
+        )
 
 
 def excluir_produto(request, produto_id):
@@ -388,9 +397,10 @@ def gerar_folha_corte_costura(request, os_id):
     img_y = y_start - 3 * line_height - img_height  # Reduz o espaço acima da imagem
 
     if ordem_de_servico.mockup:
-        mockup_path = ordem_de_servico.mockup.path
         try:
-            img = Image(mockup_path, width=img_width, height=img_height)
+            response = requests.get(ordem_de_servico.mockup.url)
+            image_file = BytesIO(response.content)
+            img = RLImage(image_file, width=img_width, height=img_height)
             img.drawOn(p, img_x, img_y)
         except Exception as e:
             p.setFont("Helvetica", 10)
@@ -519,3 +529,177 @@ def atualizar_etapa_relacionamento(request, cliente_id):
             form.save()
             messages.success(request, 'Etapa de relacionamento atualizada.')
     return redirect('cliente_detalhes', cliente_id=cliente.id)
+
+def exportar_csv(request):
+    tipo = request.GET.get('tipo')
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="{tipo}_financeiro_kq.csv"'
+
+    writer = csv.writer(response)
+
+    if tipo == 'faturamento':
+        writer.writerow(['Pedido', 'Cliente', 'Produto', 'Data Entrega', 'Quantidade', 'Valor Unitário', 'Valor Total'])
+        for pedido in Pedido.objects.prefetch_related('ordens_de_servico').select_related('cliente'):
+            for os in pedido.ordens_de_servico.all():
+                writer.writerow([
+                    pedido.id,
+                    pedido.cliente.nome,
+                    os.produto.nome,
+                    pedido.data_entrega.strftime('%d/%m/%Y') if pedido.data_entrega else 'Não definida',
+                    os.quantidade,
+                    f"{os.preco_unitario:.2f}",
+                    f"{os.preco_unitario * os.quantidade:.2f}"
+                ])
+
+    elif tipo == 'custos':
+        writer.writerow(['Pedido', 'Cliente', 'Produto', 'Tipo de Custo', 'Valor', 'Data'])
+        for custo in Custo.objects.select_related('ordem_de_servico__pedido', 'ordem_de_servico__produto'):
+            writer.writerow([
+                custo.ordem_de_servico.pedido.id,
+                custo.ordem_de_servico.pedido.cliente.nome,
+                custo.ordem_de_servico.produto.nome,
+                custo.tipo or 'Outro',
+                f"{custo.valor:.2f}",
+                custo.data.strftime('%d/%m/%Y')
+            ])
+
+    elif tipo == 'resultado':
+        writer.writerow(['Pedido', 'Cliente', 'Produto', 'Entrega', 'Valor Total', 'Custos', 'Lucro'])
+        for pedido in Pedido.objects.prefetch_related('ordens_de_servico').select_related('cliente'):
+            subtotal = 0
+            custo_total = 0
+            produtos = []
+            for os in pedido.ordens_de_servico.all():
+                produtos.append(os.produto.nome)
+                subtotal += os.preco_unitario * os.quantidade
+                custo_total += sum(c.valor for c in Custo.objects.filter(ordem_de_servico=os))
+            writer.writerow([
+                pedido.id,
+                pedido.cliente.nome,
+                ", ".join(produtos),
+                pedido.data_entrega.strftime('%d/%m/%Y') if pedido.data_entrega else 'Não definida',
+                f"{subtotal:.2f}",
+                f"{custo_total:.2f}",
+                f"{(subtotal - custo_total):.2f}"
+            ])
+
+    return response
+
+
+def resumo_financeiro(request):
+    pedidos = Pedido.objects.prefetch_related('ordens_de_servico').select_related('cliente')
+
+    filtro_cliente = request.GET.get('cliente')
+    filtro_data_inicio = request.GET.get('data_inicio')
+    filtro_data_fim = request.GET.get('data_fim')
+    filtro_produto = request.GET.get('produto')
+
+    if filtro_cliente:
+        pedidos = pedidos.filter(cliente__nome__icontains=filtro_cliente)
+
+    if filtro_data_inicio:
+        pedidos = pedidos.filter(data_criacao__gte=filtro_data_inicio)
+
+    if filtro_data_fim:
+        pedidos = pedidos.filter(data_criacao__lte=filtro_data_fim)
+
+    linhas_faturamento = []
+    linhas_resultado = []
+    linhas_custos = []
+
+    for pedido in pedidos:
+        ordens = pedido.ordens_de_servico.all()
+        subtotal = 0
+        custo_total = 0
+
+        for os in ordens:
+            if filtro_produto and filtro_produto.lower() not in os.produto.nome.lower():
+                continue
+
+            quantidade = os.quantidade
+            total = os.preco_unitario * quantidade
+            subtotal += total
+
+            custos_os = Custo.objects.filter(ordem_de_servico=os)
+            for custo in custos_os:
+                custo_total += custo.valor
+
+            linhas_faturamento.append(f"""
+                <tr>
+                    <td>{pedido.id}</td>
+                    <td>{pedido.cliente.nome}</td>
+                    <td>{os.produto.nome}</td>
+                    <td>{pedido.data_entrega.strftime('%d/%m/%Y') if pedido.data_entrega else 'Não definida'}</td>
+                    <td>{quantidade}</td>
+                    <td>R$ {os.preco_unitario:.2f}</td>
+                    <td>R$ {total:.2f}</td>
+                </tr>
+            """)
+
+        custos_pedido = Custo.objects.filter(ordem_de_servico__pedido=pedido)
+        for custo in custos_pedido:
+            linhas_custos.append(f"""
+                <tr>
+                    <td>{pedido.id}</td>
+                    <td>{pedido.cliente.nome}</td>
+                    <td>{custo.ordem_de_servico.produto.nome}</td>
+                    <td>{custo.tipo or 'Outro'}</td>
+                    <td>R$ {custo.valor:.2f}</td>
+                    <td>{custo.data.strftime('%d/%m/%Y')}</td>
+                </tr>
+            """)
+
+        linhas_resultado.append(f"""
+            <tr>
+                <td>{pedido.id}</td>
+                <td>{pedido.cliente.nome}</td>
+                <td>{', '.join([os.produto.nome for os in ordens])}</td>
+                <td>{pedido.data_entrega.strftime('%d/%m/%Y') if pedido.data_entrega else 'Não definida'}</td>
+                <td>R$ {subtotal:.2f}</td>
+                <td>R$ {custo_total:.2f}</td>
+                <td>R$ {(subtotal - custo_total):.2f}</td>
+            </tr>
+        """)
+
+    tabela_faturamento = format_html("""
+        <tbody>{}</tbody>
+    """, format_html("".join(linhas_faturamento)))
+
+    tabela_custos = format_html("""
+        <tbody>{}</tbody>
+    """, format_html("".join(linhas_custos)))
+
+    tabela_resultado = format_html("""
+        <tbody>{}</tbody>
+    """, format_html("".join(linhas_resultado)))
+
+    return render(request, 'kq_app/resumo_financeiro.html', {
+        'tabela_faturamento': tabela_faturamento,
+        'tabela_custos': tabela_custos,
+        'tabela_resultado': tabela_resultado,
+        'produtos': Produto.objects.all()
+    })
+
+def registrar_entrada_estoque(request):
+    if request.method == 'POST':
+        form = EntradaEstoqueForm(request.POST)
+        if form.is_valid():
+            entrada = form.save()
+            estoque, criado = Estoque.objects.get_or_create(
+                produto=entrada.produto,
+                cor=entrada.cor,
+                defaults={'quantidade': entrada.quantidade}
+            )
+            if not criado:
+                estoque.quantidade += entrada.quantidade
+                estoque.save()
+
+            messages.success(request, 'Entrada de estoque registrada com sucesso!')
+            return redirect('registrar_entrada_estoque')
+        else:
+            messages.error(request, 'Erro ao registrar entrada. Verifique os dados.')
+    else:
+        form = EntradaEstoqueForm()
+
+    return render(request, 'kq_app/entrada_estoque.html', {'form': form})
+
